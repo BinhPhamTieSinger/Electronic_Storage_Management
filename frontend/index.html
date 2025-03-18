@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronic Storage Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        .navbar {
+            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .1);
+        }
+        @media (max-width: 767.98px) {
+            .sidebar {
+                top: 5rem;
+            }
+        }
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .nav-link {
+            color: #333;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: #0d6efd;
+        }
+        .nav-link.active {
+            color: #0d6efd;
+        }
+        .toast {
+            margin-top: 50px;
+        }
+        #errorToast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .section {
+            padding-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Error Toast -->
+    <div class="toast" id="errorToast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Electronic Storage Management</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-nav">
+                <div class="nav-item text-nowrap">
+                    <a class="nav-link px-3" href="#" onclick="logout()">Sign out</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('home')">
+                                <i class="bi bi-house"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('products')">
+                                <i class="bi bi-box"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('orders')">
+                                <i class="bi bi-cart"></i> Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('customers')">
+                                <i class="bi bi-people"></i> Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('analysis')">
+                                <i class="bi bi-graph-up"></i> Analysis
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Home Section -->
+                <div id="home" class="section active">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Dashboard</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Products</h5>
+                                    <p class="card-text h2" id="totalProducts">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-success">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Customers</h5>
+                                    <p class="card-text h2" id="totalCustomers">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-info">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Orders</h5>
+                                    <p class="card-text h2" id="totalOrders">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card text-white bg-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Revenue</h5>
+                                    <p class="card-text h2" id="totalRevenue">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Low Stock Alert Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">Low Stock Alert</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Product ID</th>
+                                                    <th>Name</th>
+                                                    <th>Current Stock</th>
+                                                    <th>Price</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lowStockTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Orders Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Orders</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order ID</th>
+                                                    <th>Customer</th>
+                                                    <th>Product</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recentOrdersTable"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div id="products" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Products</h1>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="productSearchInput" placeholder="Search products...">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">Place Order</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('id')">ID <i class="bi bi-arrow-down-up"></i></a></th>
+                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('name')">Name <i class="bi bi-arrow-down-up"></i></a></th>
+                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('price')">Price <i class="bi bi-arrow-down-up"></i></a></th>
+                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('stock')">Stock <i class="bi bi-arrow-down-up"></i></a></th>
+                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('rating')">Rating <i class="bi bi-arrow-down-up"></i></a></th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable"></tbody>
+                        </table>
+                        <nav>
+                            <ul class="pagination justify-content-center" id="productsPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Orders Section -->
+                <div id="orders" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Orders</h1>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="orderSearchInput" placeholder="Search orders...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer Name</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable"></tbody>
+                        </table>
+                        <nav>
+                            <ul class="pagination justify-content-center" id="ordersPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Customers Section -->
+                <div id="customers" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Customers</h1>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="customerSearchInput" placeholder="Search customers...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                    <th>Total Orders</th>
+                                    <th>Total Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTable"></tbody>
+                        </table>
+                        <nav>
+                            <ul class="pagination justify-content-center" id="customersPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Analysis Section -->
+                <div id="analysis" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Analysis</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Revenue by Month</h5>
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Top Products by Sales</h5>
+                                    <canvas id="productSalesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Customer Orders Distribution</h5>
+                                    <canvas id="customerOrdersChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Stock Level Analysis</h5>
+                                    <canvas id="stockLevelChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Place Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="orderForm">
+                        <div class="mb-3">
+                            <label for="productId" class="form-label">Product ID</label>
+                            <input type="number" class="form-control" id="productId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" required min="1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="placeOrder()">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let currentUser = null;
+        let errorToast = null;
+        let currentSort = { field: 'id', direction: 'asc' };
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+            checkAuth();
+            showSection('home');
+            loadDashboard();
+
+            const searchInputs = {
+                'productSearchInput': loadProducts,
+                'orderSearchInput': loadOrders,
+                'customerSearchInput': loadCustomers
+            };
+
+            for (const [inputId, loadFunction] of Object.entries(searchInputs)) {
+                const searchInput = document.getElementById(inputId);
+                if (searchInput) {
+                    let debounceTimeout;
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(debounceTimeout);
+                        debounceTimeout = setTimeout(() => {
+                            loadFunction(1);
+                        }, 300);
+                    });
+                }
+            }
+        });
+
+        function showError(message) {
+            const toastEl = document.getElementById('errorToast');
+            const headerEl = toastEl.querySelector('.toast-header');
+            const bodyEl = document.getElementById('errorToastBody');
+
+            // Check if it's a success message
+            const isSuccess = message.toLowerCase().includes('success');
+            
+            // Update toast appearance
+            headerEl.className = `toast-header ${isSuccess ? 'bg-success' : 'bg-danger'} text-white`;
+            headerEl.querySelector('strong').textContent = isSuccess ? 'Success' : 'Error';
+            
+            // Set message
+            bodyEl.textContent = message;
+            
+            // Show toast
+            errorToast.show();
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            if (!token || !user) {
+                window.location.href = 'auth.html';
+                return;
+            }
+            currentUser = JSON.parse(user);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'auth.html';
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).style.display = 'block';
+            
+            // Update navigation links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active', 'text-primary');
+                if (link.getAttribute('onclick')?.includes(sectionName)) {
+                    link.classList.add('active', 'text-primary');
+                }
+            });
+            
+            // Load section data
+            switch(sectionName) {
+                case 'home':
+                    loadDashboard();
+                    break;
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+                case 'customers':
+                    loadCustomers();
+                    break;
+                case 'analysis':
+                    loadAnalysis();
+                    break;
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const [dashboardData, lowStockData, recentOrdersData] = await Promise.all([
+                    fetch('/api/dashboard').then(res => res.json()),
+                    fetch('/api/out-of-stock').then(res => res.json()),
+                    fetch('/api/recent-orders').then(res => res.json())
+                ]);
+
+                // Update statistics
+                document.getElementById('totalProducts').textContent = dashboardData.totalProducts;
+                document.getElementById('totalCustomers').textContent = dashboardData.totalCustomers;
+                document.getElementById('totalOrders').textContent = dashboardData.totalOrders;
+                document.getElementById('totalRevenue').textContent = `${parseInt(dashboardData.totalRevenue)/1000}K`;
+
+                // Update low stock table
+                const lowStockTable = document.getElementById('lowStockTable');
+                lowStockTable.innerHTML = lowStockData.map(product => `
+                    <tr>
+                        <td>${product.MaSP}</td>
+                        <td>${product.name}</td>
+                        <td>${product.stock}</td>
+                        <td>${(parseInt(product.price)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
+                        <td><span class="badge bg-${product.stock === 0 ? 'danger' : 'warning'}">${product.stock === 0 ? 'Out of Stock' : 'Low Stock'}</span></td>
+                    </tr>
+                `).join('');
+
+                // Update recent orders table
+                const recentOrdersTable = document.getElementById('recentOrdersTable');
+                recentOrdersTable.innerHTML = recentOrdersData.orders.map(order => `
+                    <tr>
+                        <td>${order.MaDH}</td>
+                        <td>${order.TenKH}</td>
+                        <td>${order.product_name}</td>
+                        <td>${order.SoLuong}</td>
+                        <td>${(parseInt(order.TongTien)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
+                        <td>${new Date(order.NgayDat).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showError('Error loading dashboard data');
+            }
+        }
+
+        async function loadProducts(page = 1) {
+            try {
+                const searchQuery = document.getElementById('productSearchInput').value;
+                const response = await fetch(`/api/products?page=${page}&search=${searchQuery}&sort=${currentSort.field}&direction=${currentSort.direction}`);
+                const data = await response.json();
+                
+                const productsTable = document.getElementById('productsTable');
+                productsTable.innerHTML = '';
+                
+                data.products.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.className = product.soluong <= 10 ? product.soluong === 0 ? 'table-danger' : 'table-warning' : '';
+                    row.innerHTML = `
+                        <td>${product.MaSP}</td>
+                        <td>${product.name}</td>
+                        <td>${(parseInt(product.price)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
+                        <td>${product.soluong}</td>
+                        <td>${product.star.toFixed(1)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="orderProduct(${product.MaSP})" ${product.soluong === 0 ? 'disabled' : ''}>
+                                Order
+                            </button>
+                        </td>
+                    `;
+                    productsTable.appendChild(row);
+                });
+                
+                updatePagination('productsPagination', page, data.totalPages, loadProducts);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showError('Error loading products');
+            }
+        }
+
+        async function loadOrders(page = 1) {
+            try {
+                const searchQuery = document.getElementById('orderSearchInput').value;
+                const response = await fetch(`/api/orders?page=${page}&search=${searchQuery}`);
+                const data = await response.json();
+                
+                const ordersTable = document.getElementById('ordersTable');
+                ordersTable.innerHTML = data.orders.map(order => `
+                    <tr>
+                        <td>${order.MaDH}</td>
+                        <td>${order.TenKH}</td>
+                        <td>${order.product_name}</td>
+                        <td>${order.SoLuong}</td>
+                        <td>${(parseInt(order.TongTien)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
+                        <td>${new Date(order.NgayDat).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+                
+                updatePagination('ordersPagination', page, data.totalPages, loadOrders);
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showError('Failed to load orders');
+            }
+        }
+
+        async function loadCustomers(page = 1) {
+            try {
+                const searchQuery = document.getElementById('customerSearchInput').value;
+                const response = await fetch(`/api/customers?page=${page}&search=${searchQuery}`);
+                const data = await response.json();
+                
+                const customersTable = document.getElementById('customersTable');
+                customersTable.innerHTML = data.customers.map(customer => `
+                    <tr>
+                        <td>${customer.MaKH}</td>
+                        <td>${customer.TenKH}</td>
+                        <td>${customer.DiaChi || '-'}</td>
+                        <td>${customer.SoDienThoai || '-'}</td>
+                        <td>${customer.total_orders}</td>
+                        <td>${(parseInt(customer.total_spent)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
+                    </tr>
+                `).join('');
+                
+                updatePagination('customersPagination', page, data.totalPages, loadCustomers);
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                showError('Failed to load customers');
+            }
+        }
+
+        function loadFunction(page) {
+            loadCustomers(page);
+            loadOrders(page);
+            loadProducts(page);
+        }
+
+        function updatePagination(elementId, currentPage, totalPages, loadFunction) {
+            const pagination = document.getElementById(elementId);
+            let html = '';
+            
+            // Calculate range of pages to show
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            // Previous button
+            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadFunction(${currentPage - 1})">&laquo;</a>
+                    </li>`;
+
+            // First page
+            if (startPage > 1) {
+                html += `<li class="page-item">
+                            <a class="page-link" href="#" onclick="loadFunction(1)">1</a>
+                        </li>`;
+                if (startPage > 2) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="loadFunction(${i})">${i}</a>
+                        </li>`;
+            }
+
+            // Last page
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+                html += `<li class="page-item">
+                            <a class="page-link" href="#" onclick="loadFunction(${totalPages})">${totalPages}</a>
+                        </li>`;
+            }
+
+            // Next button
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="loadFunction(${currentPage + 1})">&raquo;</a>
+                    </li>`;
+
+            pagination.innerHTML = html;
+        }
+
+        async function loadAnalysis() {
+            try {
+                const response = await fetch('/api/analysis');
+                const data = await response.json();
+
+                // Revenue by Month Chart
+                new Chart(document.getElementById('revenueChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.revenueByMonth.map(item => item.month),
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.revenueByMonth.map(item => item.revenue),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: value => '$' + value.toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Top Products Chart
+                new Chart(document.getElementById('productSalesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.topProductsData.map(d => d.name.length > 20 ? d.name.substring(0, 20) + '...' : d.name),
+                        datasets: [{
+                            label: 'Sales',
+                            data: data.topProductsData.map(d => d.sales),
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+
+                // Customer Orders Distribution Chart
+                console.log(data.customerOrdersDistribution)
+                new Chart(document.getElementById('customerOrdersChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: data.customerOrdersDistribution.labels,
+                        datasets: [{
+                            data: data.customerOrdersDistribution.data,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.5)',
+                                'rgba(54, 162, 235, 0.5)',
+                                'rgba(255, 206, 86, 0.5)',
+                                'rgba(75, 192, 192, 0.5)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+
+                // Stock Level Analysis Chart
+                new Chart(document.getElementById('stockLevelChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Out of Stock', 'Low Stock', 'Adequate Stock'],
+                        datasets: [{
+                            data: [
+                                data.stockLevels.outOfStock,
+                                data.stockLevels.lowStock,
+                                data.stockLevels.adequateStock
+                            ],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.5)',
+                                'rgba(255, 206, 86, 0.5)',
+                                'rgba(75, 192, 192, 0.5)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading analysis:', error);
+                showError('Error loading analysis data');
+            }
+        }
+
+        function orderProduct(productId) {
+            document.getElementById('productId').value = productId;
+            document.getElementById('quantity').value = '1';
+            new bootstrap.Modal(document.getElementById('orderModal')).show();
+        }
+
+        async function placeOrder() {
+            const productId = document.getElementById('productId').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            
+            if (!productId || !quantity || quantity <= 0) {
+                showError('Please enter a valid product ID and quantity');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        MaSP: productId,
+                        SoLuong: quantity,
+                        MaKH: currentUser.MaKH
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error placing order');
+                }
+
+                // Close modal and reset form
+                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+                document.getElementById('orderForm').reset();
+
+                // Show success message
+                showError('Order placed successfully! Remaining stock: ' + data.remainingStock);
+
+                // Refresh all relevant sections
+                await Promise.all([
+                    loadDashboard(),  // Refresh dashboard stats and low stock
+                    loadOrders(),     // Refresh orders table
+                    loadProducts()    // Refresh products table
+                ]);
+            } catch (error) {
+                console.error('Error placing order:', error);
+                showError(error.message);
+            }
+        }
+
+        function sortProducts(field) {
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+            loadProducts(1);
+        }
+    </script>
+</body>
+</html>
