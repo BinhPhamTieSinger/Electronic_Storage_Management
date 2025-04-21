@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - ElectroStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css"> <!-- Reuse admin widget/chart styles -->
+    <link rel="stylesheet" href="/css/user-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="dark-theme">
+    <div id="header-placeholder"></div>
+    <main class="container user-dashboard-container" id="user-dashboard-content">
+        <div class="admin-header">
+            <h2>My Dashboard</h2>
+            <p>Welcome, <span id="user-dashboard-username">User</span>!</p>
+        </div>
+        <div id="loading-user-dashboard" style="display: none;">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading your dashboard...</p>
+        </div>
+        <div id="user-dashboard-error" class="alert alert-danger" style="display: none;"></div>
+        <!-- User Stats Widgets -->
+        <section class="dashboard-widgets">
+            <div class="widget">
+                <h3>Total Orders Placed</h3>
+                <div id="user-total-orders" class="count">0</div>
+            </div>
+            <div class="widget">
+                <h3>Total Amount Spent</h3>
+                <div id="user-total-spent" class="count revenue">0₫</div>
+            </div>
+            <!-- Add more widgets like "Average Order Value" if desired -->
+        </section>
+        <!-- Recent Orders -->
+        <section class="recent-orders-section">
+            <h3 class="mb-3">Your Recent Orders</h3>
+            <div class="admin-table-container table-responsive"> <!-- Reuse styles -->
+                <table id="user-recent-orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-recent-orders-tbody">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+                <div id="no-recent-orders-message" class="text-center text-muted p-3" style="display: none;">
+                    No recent orders to display.
+                </div>
+            </div>
+            <div class="view-all-link mt-3">
+                <a href="/orders" class="btn btn-sm btn-secondary">View All My Orders</a>
+            </div>
+        </section>
+        <!-- Charts Section -->
+        <section id="user-charts-section" class="mt-4">
+            <h3 class="mb-3">Spending Overview</h3>
+            <div id="user-charts-row"> <!-- Chart container will be added here -->
+                <div class="chart-container" style="height: 380px;">
+                    <h3 class="chart-title">Your Monthly Spending</h3>
+                    <canvas id="userMonthlySpendingChart"></canvas>
+                    <div id="no-spending-chart-message" class="text-center text-muted p-5" style="display: none;">
+                        Not enough data to display spending chart.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/js/main.js"></script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/user-dashboard.js"></script>
+    <script src="/js/components/header.js"></script>
+</body>
+
+</html>

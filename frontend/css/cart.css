@@ -1,0 +1,156 @@
+/* === CART PAGE STYLES === */
+#cart-items-container table {
+    margin-top: 1rem;
+    background-color: transparent;
+    /* Inherit container background */
+}
+
+#cart-items-container th,
+#cart-items-container td {
+    vertical-align: middle;
+    padding: 1rem 0.8rem;
+    /* Adjust padding */
+}
+
+#cart-items-container thead th {
+    white-space: nowrap;
+}
+
+#cart-items-container .product-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* Space between image and text */
+}
+
+#cart-items-container .product-image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+#cart-items-container .product-details .product-name {
+    font-weight: 500;
+    color: var(--text-color-headings);
+    display: block;
+    /* Ensure it takes full width */
+    margin-bottom: 0.2rem;
+}
+
+#cart-items-container .product-details .product-id {
+    font-size: 0.8rem;
+    color: var(--text-color-muted);
+}
+
+#cart-items-container .item-quantity input[type="number"] {
+    width: 70px;
+    text-align: center;
+    padding: 0.5rem;
+    /* Adjust padding */
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    /* Hide spinner arrows - cross-browser */
+    -moz-appearance: textfield;
+}
+
+#cart-items-container .item-quantity input[type="number"]::-webkit-outer-spin-button,
+#cart-items-container .item-quantity input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#cart-items-container .remove-item-btn {
+    background: none;
+    border: none;
+    color: var(--text-color-muted);
+    font-size: 1.6rem;
+    /* Larger icon */
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    transition: color 0.2s ease;
+    line-height: 1;
+    /* Prevent extra height */
+}
+
+#cart-items-container .remove-item-btn:hover {
+    color: var(--accent-color);
+    /* Use accent color for remove */
+}
+
+.cart-summary {
+    margin-top: 2.5rem;
+    padding: 2rem;
+    background-color: var(--bg-color);
+    /* Darker summary background */
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    max-width: 450px;
+    margin-left: auto;
+    text-align: right;
+}
+
+.cart-summary h3 {
+    margin-bottom: 1.5rem;
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-color-headings);
+}
+
+.cart-summary p {
+    font-size: 1.05rem;
+    margin-bottom: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-color-muted);
+}
+
+.cart-summary p span {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.cart-summary .total-price-line {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    /* Accent total price */
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border-color);
+    display: flex;
+    justify-content: space-between;
+}
+
+.cart-summary #checkout-button {
+    width: 100%;
+    margin-top: 2rem;
+    padding: 0.9rem 1.5rem;
+    /* Larger button */
+    font-size: 1.1rem;
+    /* Uses btn-success styles */
+}
+
+#cart-empty-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    font-size: 1.1rem;
+    color: var(--text-color-muted);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    margin-top: 2rem;
+}
+
+#cart-empty-message p {
+    margin-bottom: 1.5rem;
+}
+
+#cart-page-messages,
+#checkout-message {
+    /* Uses global alert styles */
+    margin-top: 1rem;
+}

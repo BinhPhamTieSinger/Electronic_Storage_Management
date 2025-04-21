@@ -1,0 +1,882 @@
+/* === GLOBAL STYLES - MODERN DARK THEME === */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+    /* Dark Palette */
+    --bg-color: #1a1d21;
+    /* Very dark grey/blue */
+    --bg-color-alt: #282c34;
+    /* Slightly lighter card background */
+    --bg-color-header: #16181d;
+    /* Even darker header/footer */
+    --text-color: #e1e1e1;
+    /* Light grey text */
+    --text-color-muted: #a0a0a0;
+    /* Dimmer text */
+    --text-color-headings: #ffffff;
+    /* White headings */
+    --primary-color: #4a90e2;
+    /* Bright blue accent */
+    --primary-color-darker: #3a7bc8;
+    /* Darker blue for hover */
+    --secondary-color: #6c757d;
+    /* Grey */
+    --accent-color: #e94b7c;
+    /* Pink/Magenta accent for contrast (e.g., delete) */
+    --accent-color-darker: #c73a68;
+    --success-color: #5cb85c;
+    /* Green */
+    --warning-color: #f0ad4e;
+    /* Orange */
+    --info-color: #5bc0de;
+    /* Light Blue */
+    --border-color: #3a3f4a;
+    /* Subtle border */
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --input-bg: #3a3f4a;
+    --input-border: #505662;
+    --input-text: var(--text-color);
+    --input-focus-border: var(--primary-color);
+    --input-focus-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+    /* Typography & Layout */
+    --font-family: 'Roboto', sans-serif;
+    --header-height: 65px;
+    --border-radius: 6px;
+    --container-width: 92%;
+    --max-container-width: 1300px;
+    --transition-speed: 0.25s ease-in-out;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.7;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    padding-top: var(--header-height);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-size: 16px;
+    /* Base font size */
+}
+
+.container {
+    width: var(--container-width);
+    max-width: var(--max-container-width);
+    margin: 2.5rem auto;
+    /* Increased margin */
+    padding: 2rem;
+    background-color: var(--bg-color-alt);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    flex-grow: 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-color-headings);
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    font-weight: 500;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+
+a:hover {
+    color: var(--primary-color-darker);
+    text-decoration: underline;
+}
+
+ul {
+    list-style: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* --- Header --- */
+header.main-header {
+    background-color: var(--bg-color-header);
+    color: var(--text-color);
+    padding: 0 1.5rem;
+    /* More padding */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--header-height);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
+}
+
+header.main-header .logo {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text-color-headings);
+    text-decoration: none;
+}
+
+header.main-header .logo:hover {
+    color: var(--primary-color);
+}
+
+header.main-header nav ul {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    /* Spacing between nav items */
+}
+
+header.main-header nav ul li {
+    margin: 0;
+    /* Remove default margin */
+}
+
+header.main-header nav ul li a,
+header.main-header nav ul li .user-info {
+    color: var(--text-color-muted);
+    padding: 0.6rem 0.8rem;
+    transition: color var(--transition-speed), background-color var(--transition-speed);
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    text-decoration: none;
+    border-bottom: none;
+    /* Remove underline effect */
+    display: block;
+    /* Ensure padding works */
+}
+
+header.main-header nav ul li a:hover,
+header.main-header nav ul li a.active {
+    color: var(--text-color-headings);
+    background-color: rgba(255, 255, 255, 0.08);
+    /* Subtle hover/active background */
+}
+
+header.main-header nav ul li .user-info {
+    font-size: 0.9rem;
+    background: none !important;
+    /* No background for user info */
+    cursor: default;
+}
+
+/* --- Buttons (Global & Header Specific) --- */
+.btn {
+    display: inline-block;
+    font-weight: 500;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    border-radius: var(--border-radius);
+    transition: color var(--transition-speed), background-color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed), transform 0.1s ease-out;
+    text-decoration: none !important;
+    /* Override link underline */
+    line-height: 1.5;
+    /* Consistent line height */
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active {
+    transform: translateY(0px);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Primary Button */
+.btn-primary {
+    color: #fff;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-color-darker);
+    border-color: var(--primary-color-darker);
+    color: #fff;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.5);
+}
+
+/* Secondary Button (Outline Style) */
+.btn-secondary {
+    color: var(--text-color-muted);
+    background-color: var(--bg-color-alt);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    color: var(--text-color);
+    background-color: #3a3f4a;
+    /* Slightly darker alt */
+    border-color: #505662;
+}
+
+.btn-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
+}
+
+/* Header Buttons (Login, Register, Logout, Theme) */
+header.main-header .btn {
+    padding: 0.5rem 1rem;
+    /* Slightly smaller padding */
+    font-size: 0.9rem;
+}
+
+header.main-header .btn-login {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: none;
+}
+
+header.main-header .btn-login:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+    color: var(--primary-color-darker);
+}
+
+header.main-header .btn-register {
+    /* Use primary style */
+    color: #fff;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+header.main-header .btn-register:hover {
+    background-color: var(--primary-color-darker);
+    border-color: var(--primary-color-darker);
+}
+
+header.main-header .btn-logout {
+    /* Use secondary/outline style */
+    color: var(--text-color-muted);
+    border-color: var(--border-color);
+}
+
+header.main-header .btn-logout:hover {
+    color: var(--text-color);
+    border-color: var(--text-color-muted);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+header.main-header .btn-theme-toggle {
+    color: var(--text-color-muted);
+    border: 1px solid var(--border-color);
+    padding: 0.4rem 0.7rem;
+    /* Adjust padding for icon-like button */
+    font-size: 1.1rem;
+    /* Slightly larger icon */
+    background: none;
+}
+
+header.main-header .btn-theme-toggle:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: rgba(74, 144, 226, 0.1);
+}
+
+/* Other Button Variants */
+.btn-success {
+    color: #fff;
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-success:hover {
+    background-color: #4cae4c;
+    border-color: #4cae4c;
+}
+
+.btn-danger {
+    color: #fff;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Use accent */
+.btn-danger:hover {
+    background-color: var(--accent-color-darker);
+    border-color: var(--accent-color-darker);
+}
+
+.btn-warning {
+    color: #111;
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+/* Dark text on yellow */
+.btn-warning:hover {
+    background-color: #eea236;
+    border-color: #eea236;
+}
+
+.btn-info {
+    color: #fff;
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+}
+
+.btn-info:hover {
+    background-color: #46b8da;
+    border-color: #46b8da;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.btn-lg {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* --- Footer --- */
+footer.main-footer {
+    background-color: var(--bg-color-header);
+    color: var(--text-color-muted);
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: auto;
+    /* Push to bottom */
+    font-size: 0.9rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* --- Forms --- */
+.form-group {
+    margin-bottom: 1.5rem;
+    /* More spacing */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+    /* Slightly bolder labels */
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="search"],
+.form-group input[type="tel"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    /* More padding */
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: var(--input-focus-shadow);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-color-muted);
+    opacity: 0.7;
+}
+
+/* --- Tables --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background-color: transparent;
+    /* Inherit container background */
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+th,
+td {
+    padding: 0.9rem 1rem;
+    /* Adjust padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    /* Align cell content vertically */
+}
+
+thead th {
+    background-color: rgba(255, 255, 255, 0.05);
+    /* Subtle header background */
+    color: var(--text-color-headings);
+    font-weight: 500;
+    border-bottom-width: 2px;
+    /* Thicker bottom border */
+    border-bottom-color: var(--primary-color);
+    /* Accent border */
+    white-space: nowrap;
+    /* Prevent header wrapping */
+}
+
+tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+
+tbody tr:hover {
+    background-color: rgba(74, 144, 226, 0.08);
+    /* Subtle primary hover */
+}
+
+tbody td .actions {
+    /* Container for action buttons in tables */
+    white-space: nowrap;
+    text-align: right;
+}
+
+tbody td .actions .btn {
+    margin-left: 0.5rem;
+}
+
+/* --- Alerts --- */
+.alert {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    position: relative;
+    /* For potential close buttons */
+}
+
+.alert-heading {
+    color: inherit;
+    margin-top: 0;
+    margin-bottom: .5rem;
+    font-weight: 500;
+}
+
+.alert-link {
+    font-weight: bold;
+}
+
+.alert-success {
+    color: #c3e6cb;
+    background-color: #155724;
+    border-color: #1c6431;
+}
+
+.alert-danger {
+    color: #f5c6cb;
+    background-color: #721c24;
+    border-color: #80242d;
+}
+
+.alert-info {
+    color: #bee5eb;
+    background-color: #0c5460;
+    border-color: #0f6674;
+}
+
+.alert-warning {
+    color: #111;
+    background-color: #856404;
+    border-color: #937104;
+}
+
+/* Dark text on yellow */
+.alert-warning {
+    color: #ffeeba;
+    background-color: #856404;
+    border-color: #937104;
+}
+
+/* Light text on dark yellow */
+/* --- Loading Spinner --- */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    /* Light border */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    /* Spinner color */
+    margin: 2rem auto;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    text-align: center;
+    color: var(--text-color-muted);
+    margin-top: -1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* --- Modal (Basic structure for Add/Edit) --- */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    z-index: 1050;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    /* Darker overlay */
+}
+
+.modal-content {
+    background-color: var(--bg-color-alt);
+    margin: 8% auto;
+    /* Adjust vertical centering */
+    padding: 2rem 2.5rem;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 650px;
+    /* Slightly wider default */
+    border-radius: var(--border-radius);
+    position: relative;
+    box-shadow: var(--card-shadow);
+    animation: slideDownFadeIn 0.4s ease-out;
+}
+
+.modal-header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.6rem;
+    /* Larger title */
+    color: var(--text-color-headings);
+    font-weight: 500;
+}
+
+.close-button {
+    color: var(--text-color-muted);
+    font-size: 2rem;
+    /* Larger close icon */
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0 0.5rem;
+    transition: color 0.2s ease;
+    line-height: 1;
+    /* Prevent extra height */
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+@keyframes slideDownFadeIn {
+    from {
+        transform: translateY(-40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* --- Utilities --- */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-danger {
+    color: var(--accent-color) !important;
+}
+
+/* Use accent */
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.text-warning {
+    color: var(--warning-color) !important;
+}
+
+.text-info {
+    color: var(--info-color) !important;
+}
+
+.text-muted {
+    color: var(--text-color-muted) !important;
+}
+
+.mt-1 {
+    margin-top: 0.5rem !important;
+}
+
+.mt-2 {
+    margin-top: 1rem !important;
+}
+
+.mt-3 {
+    margin-top: 1.5rem !important;
+}
+
+.mt-4 {
+    margin-top: 2rem !important;
+}
+
+.mb-1 {
+    margin-bottom: 0.5rem !important;
+}
+
+.mb-2 {
+    margin-bottom: 1rem !important;
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+.mb-4 {
+    margin-bottom: 2rem !important;
+}
+
+.p-1 {
+    padding: 0.5rem !important;
+}
+
+.p-2 {
+    padding: 1rem !important;
+}
+
+.p-3 {
+    padding: 1.5rem !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
+.d-block {
+    display: block !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+.justify-content-between {
+    justify-content: space-between !important;
+}
+
+.justify-content-center {
+    justify-content: center !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.w-100 {
+    width: 100% !important;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    .container {
+        width: 95%;
+    }
+
+    h1 {
+        font-size: 2.2rem;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 60px;
+    }
+
+    body {
+        padding-top: var(--header-height);
+        font-size: 15px;
+    }
+
+    header.main-header {
+        padding: 0 1rem;
+    }
+
+    header.main-header .logo {
+        font-size: 1.5rem;
+    }
+
+    /* Consider collapsing nav to a burger menu here */
+    header.main-header nav ul {
+        gap: 0.2rem;
+    }
+
+    header.main-header nav ul li a,
+    header.main-header nav ul li .user-info {
+        padding: 0.5rem 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    header.main-header .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .container {
+        padding: 1.5rem;
+        margin: 1.5rem auto;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        padding: 1.5rem;
+    }
+
+    .modal-title {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.9rem;
+    }
+
+    h2 {
+        font-size: 1.6rem;
+    }
+
+    /* Further adjustments for very small screens if needed */
+    /* Header might need significant changes (burger menu) */
+    header.main-header {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 0.5rem;
+    }
+
+    header.main-header .logo {
+        margin-bottom: 0.5rem;
+        width: 100%;
+        text-align: center;
+    }
+
+    header.main-header nav {
+        width: 100%;
+    }
+
+    header.main-header nav ul {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}

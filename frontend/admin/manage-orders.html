@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders - ElectroStore</title>
+    <link rel="stylesheet" href="../css/style.css"> <!-- Note path change -->
+    <link rel="stylesheet" href="../css/admin.css"> <!-- Admin specific styles -->
+</head>
+
+<body>
+    <div id="header-placeholder"></div> <!-- Header loaded by main.js -->
+    <main class="container admin-container" id="manage-orders-content">
+        <div class="admin-header">
+            <h2>Manage Orders</h2>
+            <!-- Add filters or actions if needed -->
+        </div>
+        <!-- Messages Area -->
+        <div id="admin-orders-error" class="alert" style="display: none;"></div>
+        <!-- Search -->
+        <div class="mb-2">
+            <label for="admin-order-search">Search Orders:</label>
+            <input type="search" id="admin-order-search" placeholder="Search by Order ID, Customer Name, Product Name..." class="form-control" style="display: inline-block; width: auto; vertical-align: middle; padding: 10px">
+        </div>
+        <div id="loading-admin-orders" style="display: none;" class="text-center p-2">
+            <div class="spinner"></div> Loading orders...
+        </div>
+        <!-- Orders Table -->
+        <div class="admin-table-container table-responsive">
+            <table id="admin-orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Total Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-orders-tbody">
+                    <!-- Orders loaded here -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination-controls mt-2">
+            <button id="admin-order-prev-page" class="btn btn-secondary" disabled>« Prev</button>
+            <span id="admin-order-page-info">Page 1 of 1</span>
+            <button id="admin-order-next-page" class="btn btn-secondary" disabled>Next »</button>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div> <!-- Footer loaded by main.js -->
+    <!-- Core JS & Admin Logic -->
+    <script src="../js/main.js"></script> <!-- Path change -->
+    <script src="../js/cart.js"></script> <!-- Needed for header -->
+    <script src="../js/admin/manageOrders.js"></script> <!-- Path change -->
+    <!-- Optional: Header Component Loading -->
+    <script src="../js/components/header.js"></script> <!-- Path change -->
+</body>
+
+</html>

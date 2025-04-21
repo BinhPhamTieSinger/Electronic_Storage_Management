@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ElectroStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+
+<body class="dark-theme">
+    <div id="header-placeholder"></div>
+    <main class="auth-container">
+        <h2>Create Account</h2>
+        <div id="auth-error" class="alert alert-danger" style="display: none;"></div>
+        <div id="auth-success" class="alert alert-success" style="display: none;"></div>
+        <form id="register-form" novalidate>
+            <div class="form-group">
+                <label for="username">Username <span class="required-star">*</span></label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password (min 6 characters) <span class="required-star">*</span></label>
+                <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password <span class="required-star">*</span></label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password">
+            </div>
+            <h4>Customer Information</h4>
+            <div class="form-group">
+                <label for="tenKH">Full Name <span class="required-star">*</span></label>
+                <input type="text" id="tenKH" name="tenKH" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="diaChi">Address (Optional)</label>
+                <input type="text" id="diaChi" name="diaChi" autocomplete="street-address">
+            </div>
+            <div class="form-group">
+                <label for="soDienThoai">Phone Number (Optional)</label>
+                <input type="tel" id="soDienThoai" name="soDienThoai" autocomplete="tel">
+            </div>
+            <button type="submit" class="btn btn-submit-auth">Register</button>
+        </form>
+        <p class="toggle-link">
+            Already have an account? <a href="/login">Login here</a>
+        </p>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/js/main.js"></script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/components/header.js"></script>
+</body>
+
+</html>

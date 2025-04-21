@@ -1,21 +1,8 @@
-const mysql = require('mysql2');
-
+const sql = require('msnodesqlv8');
 require('dotenv').config();
-
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME
-});
-
-connection.connect((err) => {
-  if (err) {
-    console.error('Error connecting to MySQL:', err);
-    return;
-  }
-  console.log('Connected to MySQL database');
-});
-
-module.exports = connection;
+const connectionString = `server=.;Database=${process.env.DB_NAME || 'electronic_storage'};Trusted_Connection=Yes;Driver={ODBC Driver 17 for SQL Server}`; // Ensure correct driver
+console.log(`📦 Database configuration loaded for msnodesqlv8. DB: ${process.env.DB_NAME || 'electronic_storage'}, Trusted: Yes`);
+module.exports = {
+    sql,
+    connectionString
+};

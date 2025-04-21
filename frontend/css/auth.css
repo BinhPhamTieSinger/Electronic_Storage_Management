@@ -1,0 +1,87 @@
+/* === AUTH PAGE STYLES === */
+
+.auth-container {
+    width: 1040px;
+    /* max-width: 520px; Increased width */
+    margin: 5rem auto;
+    padding: 2.5rem 3rem;
+    background-color: var(--bg-color-alt);
+    box-shadow: var(--card-shadow);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: var(--text-color-headings);
+    font-weight: 400;
+    font-size: 1.8rem;
+}
+
+.auth-container .form-group {
+    margin-bottom: 1.8rem;
+}
+
+.auth-container .form-group label {
+    font-weight: 400;
+    color: var(--text-color-muted);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.auth-container .form-group input {
+    padding: 0.9rem 1rem;
+}
+
+.auth-container .btn-submit-auth {
+    width: 100%;
+    padding: 0.9rem;
+    font-size: 1.05rem;
+    margin-top: 2rem;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+    font-weight: 500;
+}
+.auth-container .btn-submit-auth:hover {
+    background-color: var(--primary-color-darker);
+    border-color: var(--primary-color-darker);
+}
+
+.auth-container .toggle-link {
+    text-align: center;
+    margin-top: 2.5rem;
+    font-size: 0.95rem;
+    color: var(--text-color-muted);
+}
+
+.auth-container .toggle-link a {
+    font-weight: 500;
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+.auth-container .toggle-link a:hover {
+     color: var(--primary-color-darker);
+}
+
+#auth-error, #auth-success {
+    margin: -1rem 0 1.5rem 0;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* Specific adjustments for register form */
+#register-form h4 {
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    font-weight: 500;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+#register-form .form-group label span.required-star {
+    color: var(--accent-color);
+    margin-left: 2px;
+}

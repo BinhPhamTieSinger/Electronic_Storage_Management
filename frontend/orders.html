@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - ElectroStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Can add specific orders.css if needed -->
+</head>
+
+<body class="dark-theme">
+    <div id="header-placeholder"></div>
+    <main class="container">
+        <h2>My Order History</h2>
+        <div id="orders-error-message" class="alert alert-danger" style="display: none;"></div>
+        <div id="loading-orders" style="display: none;">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading your orders...</p>
+        </div>
+        <div class="admin-table-container table-responsive"> <!-- Reuse admin table style -->
+            <table id="user-orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Total Amount</th>
+                        <!-- Add Status if implemented -->
+                    </tr>
+                </thead>
+                <tbody id="user-orders-tbody">
+                    <!-- Orders loaded here -->
+                </tbody>
+            </table>
+            <div id="no-orders-message" class="text-center text-muted p-3" style="display: none;">
+                You haven't placed any orders yet.
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/js/main.js"></script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/orders.js"></script>
+    <script src="/js/components/header.js"></script>
+</body>
+
+</html>

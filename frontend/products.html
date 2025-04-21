@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - ElectroStore</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/products.css">
+</head>
+
+<body class="dark-theme">
+    <div id="header-placeholder"></div>
+    <main class="container">
+        <h2>Product Catalog</h2>
+        <div id="cart-message-placeholder" class="mb-3">
+            <!-- Messages like "Item added" appear here -->
+        </div>
+        <!-- Controls: Search & Sort -->
+        <div class="product-controls">
+            <div class="control-group">
+                <label for="product-search">Search:</label>
+                <input type="search" id="product-search" placeholder="Search by name or ID...">
+            </div>
+            <div class="control-group">
+                <label for="product-sort">Sort by:</label>
+                <select id="product-sort">
+                    <option value="MaSP-asc">ID (Asc)</option>
+                    <option value="MaSP-desc">ID (Desc)</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="price-asc">Price (Low-High)</option>
+                    <option value="price-desc">Price (High-Low)</option>
+                    <option value="soluong-desc">Stock (High-Low)</option>
+                    <option value="soluong-asc">Stock (Low-High)</option>
+                    <option value="star-desc">Rating (High-Low)</option>
+                    <option value="created_at-desc">Newest First</option>
+                </select>
+            </div>
+        </div>
+        <!-- Product Grid Area -->
+        <div id="loading-products" style="display: none;">
+            <div class="spinner"></div>
+            <p class="loading-text">Loading products...</p>
+        </div>
+        <div id="products-grid">
+            <!-- Products will be loaded here by JS -->
+        </div>
+        <div id="no-products-message" class="no-products-message" style="display: none;">
+            No products found matching your criteria.
+        </div>
+        <!-- Pagination -->
+        <div class="pagination-controls">
+            <button id="prev-page" class="btn btn-secondary btn-sm" disabled>« Prev</button>
+            <span id="page-info">Page 1 of 1</span>
+            <button id="next-page" class="btn btn-secondary btn-sm" disabled>Next »</button>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/js/main.js"></script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/products.js"></script>
+    <script src="/js/components/header.js"></script>
+</body>
+
+</html>

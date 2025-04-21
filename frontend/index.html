@@ -3,834 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electronic Storage Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <title>ElectroStore - Powering Your Innovations</title>
+    <link rel="stylesheet" href="/css/style.css">
     <style>
-        .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        /* === HERO BANNER V5 - GRADIENT + LETTER GLOW === */
+        .hero-banner-v5 {
+            background: #111418; /* Dark base */
+            padding: 6rem 1rem;
+            text-align: center;
+            min-height: 45vh; /* Adjusted height for large font */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
         }
-        .navbar {
-            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .1);
+
+        /* --- Styles for the main H1 Title --- */
+        .animated-title-v5 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 1000;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 2;
+            padding: 0.1em 0; /* Padding for effects */
+            /* === Font Size Control === */
+            /* Using 10rem can be very large, consider clamp for responsiveness */
+            /* font-size: 10rem; */
+            font-size: clamp(3.5rem, 12vw, 10rem); /* Responsive: min, preferred(viewport), max */
+
+            /* === Animated Gradient Fill (Applied to Parent H1) === */
+            background: linear-gradient(90deg,
+                var(--primary-color), /* Blue */
+                var(--info-color),    /* Light Blue */
+                #AFEEEE,               /* Pale Turquoise */
+                #87CEFA,               /* Light Sky Blue */
+                var(--primary-color)   /* Back to Blue */
+            );
+            background-size: 300% 100%; /* Wide gradient */
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent; /* Hide base text color, show gradient */
+            animation: titleShine 10s linear infinite;
         }
-        @media (max-width: 767.98px) {
-            .sidebar {
-                top: 5rem;
+
+        /* Apply base shadow to parent H1 for overall depth */
+        .animated-title-v5 {
+             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+
+        /* === Styles for Individual Letter Spans (created by JS) === */
+        .animated-title-v5 span {
+            display: inline-block; /* Allows transform/animation if needed */
+            position: relative; /* Needed if using pseudo-elements on spans */
+            /* Individual letters inherit the gradient fill via background-clip */
+            /* Apply the letter glow animation */
+            animation: letterGlow 4s ease-in-out infinite;
+            /* Staggered delay is set by JavaScript */
+        }
+
+        /* === Keyframes === */
+
+        /* Gradient background movement */
+        @keyframes titleShine {
+            0% { background-position: 0% center; }
+            100% { background-position: -300% center; }
+        }
+
+        /* Individual letter glow animation */
+        @keyframes letterGlow {
+            0%, 100% { /* Start and end state - minimal glow */
+                text-shadow:
+                    /* Base depth shadow (inherited from parent might be enough) */
+                    /* 0 1px 1px rgba(0, 0, 0, 0.3), */
+                    /* Subtle base glow */
+                     0 0 3px rgba(74, 144, 226, 0.3),
+                     0 0 5px rgba(91, 192, 222, 0.1);
+                 opacity: 0.8; /* Slightly dimmer base */
+            }
+            50% { /* Peak glow state */
+                 text-shadow:
+                    /* 0 1px 1px rgba(0, 0, 0, 0.3), */
+                     /* Inner white highlight */
+                     0 0 2px rgba(255, 255, 255, 0.8),
+                     /* Primary color glow */
+                     0 0 8px rgba(74, 144, 226, 0.9),
+                     0 0 18px rgba(74, 144, 226, 0.7),
+                     /* Secondary color glow */
+                     0 0 30px rgba(91, 192, 222, 0.5);
+                 opacity: 1; /* Full opacity at peak */
             }
         }
-        .sidebar-sticky {
+
+
+        /* --- Subtitle and Button Styling --- */
+        .hero-banner-v5 .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-color-muted);
+            margin-bottom: 2.5rem;
+            max-width: 650px;
+            font-weight: 300;
+            z-index: 2;
+            animation: fadeInDelayed 1s ease-out 0.5s backwards;
+        }
+        .hero-banner-v5 .cta-button {
+            z-index: 2;
+            animation: fadeInDelayed 1s ease-out 0.8s backwards;
+        }
+        @keyframes fadeInDelayed {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Intro Cards Section (Keep styles from previous answer) */
+        .intro-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.8rem;
+            margin-top: -4rem;
             position: relative;
-            top: 0;
-            height: calc(100vh - 48px);
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto;
+            z-index: 5;
+            padding: 0 1.5rem;
         }
-        .nav-link {
-            color: #333;
+        .intro-card {
+            background-color: var(--bg-color-alt);
+            padding: 2rem 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .intro-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+        .intro-card h3 { color: var(--primary-color); margin-bottom: 1rem; font-size: 1.3rem; }
+        .intro-card p { font-size: 0.95rem; color: var(--text-color-muted); line-height: 1.6; }
+        .intro-card .card-icon { font-size: 2.5rem; margin-bottom: 1rem; color: var(--info-color); }
+
+
+        
+        /* --- Overview Section Styles --- */
+        .overview-section {
+            padding: 3rem 0; /* Add padding top/bottom */
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+        .overview-section h2 {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            color: var(--text-color-headings);
+        }
+        /* Reuse dashboard widget styles - make sure admin.css is linked */
+        /* Or copy relevant .dashboard-widgets and .widget styles here */
+        .dashboard-widgets {
+             /* Copied/adapted from admin.css */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust minmax */
+            gap: 1.5rem;
+        }
+        .widget {
+            background-color: var(--bg-color-alt);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .widget:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+        }
+        .widget h3 {
+            margin-bottom: 0.8rem; color: var(--text-color-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .widget .count {
+            font-size: 2.4rem; font-weight: 700; color: var(--primary-color); line-height: 1.1;
+        }
+        /* Optional: Specific style for overview counts */
+        .overview-section .widget .count {
+             color: var(--info-color); /* Use info color for public stats */
+             font-size: 2.2rem; /* Slightly smaller */
+        }
+
+
+        /* --- Enhanced About Us Styles --- */
+        .about-us {
+            background: none; /* Keep transparent */
+            padding: 3rem 0;
+            border: none;
+            margin-top: 2rem;
+            line-height: 1.8; /* Slightly more spacing */
+        }
+        .about-us h2 {
+             text-align: center;
+             margin-bottom: 2rem;
+             border-bottom: 1px solid var(--border-color);
+             padding-bottom: 1rem;
+             display: inline-block; /* Center border */
+        }
+        .about-us p {
+            color: var(--text-color);
+            font-size: 1.05rem;
+            max-width: 800px; /* Limit paragraph width */
+            margin-left: auto;
+            margin-right: auto;
+            text-align: justify; /* Justify text for block appearance */
+            margin-bottom: 1.5rem;
+        }
+        .creator-info {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px dashed var(--border-color);
+            text-align: center;
+        }
+         .creator-info h3 {
+             margin-bottom: 1.5rem;
+             color: var(--primary-color);
+             font-weight: 500;
+         }
+         .creator-info p {
+             max-width: 600px; /* Limit width for creator text */
+             text-align: center; /* Center creator text */
+              color: var(--text-color-muted);
+              font-size: 1rem;
+         }
+
+         /* Contact Links Styling */
+        .contact-links {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem; /* Space between links */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .contact-links a {
+            color: var(--info-color); /* Use info color for links */
+            text-decoration: none;
             font-weight: 500;
+            transition: color 0.2s ease, transform 0.2s ease;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+            gap: 0.5rem; /* Space between icon and text */
         }
-        .nav-link:hover {
-            color: #0d6efd;
-        }
-        .nav-link.active {
-            color: #0d6efd;
-        }
-        .toast {
-            margin-top: 50px;
-        }
-        #errorToast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        .section {
-            padding-top: 50px;
+        .contact-links a:hover {
+            color: var(--primary-color);
+            transform: translateY(-2px);
+             text-decoration: none;
         }
     </style>
 </head>
-<body>
-    <!-- Error Toast -->
-    <div class="toast" id="errorToast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header bg-danger text-white">
-            <strong class="me-auto">Error</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body" id="errorToastBody"></div>
-    </div>
+<body class="dark-theme">
+    <div id="header-placeholder"></div>
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Electronic Storage Management</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="navbar-nav">
-                <div class="nav-item text-nowrap">
-                    <a class="nav-link px-3" href="#" onclick="logout()">Sign out</a>
+    <!-- Banner Section V5 -->
+    <section class="hero-banner-v5">
+        <h1 class="animated-title-v5">ElectroStore</h1>
+        <p class="subtitle">Your reliable source for electronic components, tools, and inspiration. Powering your projects from prototype to production.</p>
+        <a href="/products" class="btn btn-lg btn-primary cta-button">Explore Products</a>
+    </section>
+
+    <!-- Intro Cards Section -->
+    <section class="intro-cards container" style="background: none; box-shadow: none; border: none; padding-top: 0; margin-top: -4rem;">
+        <div class="intro-card"> <div class="card-icon">⚡</div> <h3>Vast Selection</h3> <p>Thousands of components in stock, from basic resistors to advanced microcontrollers and sensors.</p> </div>
+        <div class="intro-card"> <div class="card-icon">📊</div> <h3>Data Driven</h3> <p>Analyze trends, track stock levels, and manage orders efficiently with our integrated system.</p> </div>
+        <div class="intro-card"> <div class="card-icon">🛒</div> <h3>Easy Ordering</h3> <p>Simple registration, intuitive product browsing, and a streamlined checkout process.</p> </div>
+        <div class="intro-card"> <div class="card-icon">🚀</div> <h3>Fast & Reliable</h3> <p>Get the parts you need quickly with our dependable shipping and robust inventory management.</p> </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="container" style="margin-top: 2rem;">
+
+        <!-- Website Overview Section -->
+        <section class="overview-section">
+            <h2>Website Overview</h2>
+            <div class="dashboard-widgets">
+                <div class="widget">
+                    <h3>Products Available</h3>
+                    <div id="public-total-products" class="count">1500+</div>
+                </div>
+                <div class="widget">
+                    <h3>Orders Processed</h3>
+                    <div id="public-total-orders" class="count">5k+</div>
+                </div>
+                <div class="widget">
+                    <h3>Components Shipped</h3>
+                    <div id="public-components-shipped" class="count">75k+</div>
+                </div>
+                <div class="widget">
+                    <h3>Active Users</h3>
+                    <div id="public-happy-customers" class="count">1k+</div>
                 </div>
             </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showSection('home')">
-                                <i class="bi bi-house"></i> Home
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showSection('products')">
-                                <i class="bi bi-box"></i> Products
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showSection('orders')">
-                                <i class="bi bi-cart"></i> Orders
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showSection('customers')">
-                                <i class="bi bi-people"></i> Customers
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="showSection('analysis')">
-                                <i class="bi bi-graph-up"></i> Analysis
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Home Section -->
-                <div id="home" class="section active">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Dashboard</h1>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 mb-4">
-                            <div class="card text-white bg-primary">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Products</h5>
-                                    <p class="card-text h2" id="totalProducts">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-4">
-                            <div class="card text-white bg-success">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Customers</h5>
-                                    <p class="card-text h2" id="totalCustomers">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-4">
-                            <div class="card text-white bg-info">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Orders</h5>
-                                    <p class="card-text h2" id="totalOrders">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-4">
-                            <div class="card text-white bg-warning">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Revenue</h5>
-                                    <p class="card-text h2" id="totalRevenue">$0</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Low Stock Alert Section -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card border-danger">
-                                <div class="card-header bg-danger text-white">
-                                    <h5 class="mb-0">Low Stock Alert</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Product ID</th>
-                                                    <th>Name</th>
-                                                    <th>Current Stock</th>
-                                                    <th>Price</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="lowStockTable"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Orders Section -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0">Recent Orders</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Order ID</th>
-                                                    <th>Customer</th>
-                                                    <th>Product</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total</th>
-                                                    <th>Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="recentOrdersTable"></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Products Section -->
-                <div id="products" class="section">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Products</h1>
-                        <div class="d-flex gap-2">
-                            <input type="text" class="form-control" id="productSearchInput" placeholder="Search products...">
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">Place Order</button>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('id')">ID <i class="bi bi-arrow-down-up"></i></a></th>
-                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('name')">Name <i class="bi bi-arrow-down-up"></i></a></th>
-                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('price')">Price <i class="bi bi-arrow-down-up"></i></a></th>
-                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('stock')">Stock <i class="bi bi-arrow-down-up"></i></a></th>
-                                    <th><a href="#" class="text-dark text-decoration-none" onclick="sortProducts('rating')">Rating <i class="bi bi-arrow-down-up"></i></a></th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsTable"></tbody>
-                        </table>
-                        <nav>
-                            <ul class="pagination justify-content-center" id="productsPagination"></ul>
-                        </nav>
-                    </div>
-                </div>
-
-                <!-- Orders Section -->
-                <div id="orders" class="section">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Orders</h1>
-                        <div class="d-flex gap-2">
-                            <input type="text" class="form-control" id="orderSearchInput" placeholder="Search orders...">
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Customer Name</th>
-                                    <th>Product Name</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTable"></tbody>
-                        </table>
-                        <nav>
-                            <ul class="pagination justify-content-center" id="ordersPagination"></ul>
-                        </nav>
-                    </div>
-                </div>
-
-                <!-- Customers Section -->
-                <div id="customers" class="section">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Customers</h1>
-                        <div class="d-flex gap-2">
-                            <input type="text" class="form-control" id="customerSearchInput" placeholder="Search customers...">
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Address</th>
-                                    <th>Phone</th>
-                                    <th>Total Orders</th>
-                                    <th>Total Spent</th>
-                                </tr>
-                            </thead>
-                            <tbody id="customersTable"></tbody>
-                        </table>
-                        <nav>
-                            <ul class="pagination justify-content-center" id="customersPagination"></ul>
-                        </nav>
-                    </div>
-                </div>
-
-                <!-- Analysis Section -->
-                <div id="analysis" class="section">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Analysis</h1>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Revenue by Month</h5>
-                                    <canvas id="revenueChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Top Products by Sales</h5>
-                                    <canvas id="productSalesChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Customer Orders Distribution</h5>
-                                    <canvas id="customerOrdersChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-4">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Stock Level Analysis</h5>
-                                    <canvas id="stockLevelChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- Order Modal -->
-    <div class="modal fade" id="orderModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Place Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="orderForm">
-                        <div class="mb-3">
-                            <label for="productId" class="form-label">Product ID</label>
-                            <input type="number" class="form-control" id="productId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="quantity" class="form-label">Quantity</label>
-                            <input type="number" class="form-control" id="quantity" required min="1">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="placeOrder()">Place Order</button>
-                </div>
+            <!--
+            <div class="charts-placeholder mt-4 text-center text-muted">
+                <p>(More detailed public analytics charts coming soon!)</p>
             </div>
-        </div>
-    </div>
+            -->
+        </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <!-- Enhanced About Us Section -->
+        <section class="about-us">
+             <h2 style="text-align: center;">About ElectroStore</h2>
+             <p>ElectroStore was born from a shared passion for electronics and a desire to make quality components readily accessible to innovators everywhere. We believe that the right parts are the foundation of great ideas, and our mission is to bridge the gap between inspiration and creation. We are committed to providing a comprehensive selection of reliable electronic components, tools, and resources, coupled with competitive pricing and exceptional customer support.</p>
+             <p>Whether you are a seasoned engineer developing cutting-edge technology, a student embarking on your first electronics project, or a hobbyist bringing a creative vision to life, ElectroStore aims to be your trusted partner. We continuously expand our inventory, streamline our processes, and leverage data insights to ensure you have what you need, when you need it, to power your next breakthrough.</p>
+
+             <div class="creator-info">
+                 <h3>Meet the Creator</h3>
+                 <p>This platform was developed by <strong>Pham Quoc Binh</strong> (also known as TieSinger), a web development enthusiast passionate about building functional and data-driven applications. Feel free to connect!</p>
+                 <div class="contact-links">
+                     <a href="mailto:phamquocbinh2018@gmail.com" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
+                        </svg>  Email
+                    </a>
+                     <a href="https://github.com/BinhPhamTieSinger" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github" viewBox="0 0 16 16">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/>
+                          </svg> GitHub
+                    </a>
+                     <a href="https://www.facebook.com/binh.pham.65462" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
+                            <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+                        </svg> Facebook
+                    </a>
+                 </div>
+             </div>
+        </section>
+
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.min.js" integrity="sha384-VQqxDN0EQCkWoxt/0vsQvZswzTHUVOImccYmSyhJTp7kGtPed0Qcx8rK9h9YEgx+" crossorigin="anonymous"></script>
+    <!-- JavaScript Files -->
+    <script src="/js/main.js"></script>
+    <script src="/js/cart.js"></script>
+    <script src="/js/components/header.js"></script>
+
+    <!-- Inline Script for Title Animation Setup -->
     <script>
-        // Global variables
-        let currentUser = null;
-        let errorToast = null;
-        let currentSort = { field: 'id', direction: 'asc' };
-
-        // Check authentication on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
-            checkAuth();
-            showSection('home');
-            loadDashboard();
-
-            const searchInputs = {
-                'productSearchInput': loadProducts,
-                'orderSearchInput': loadOrders,
-                'customerSearchInput': loadCustomers
-            };
-
-            for (const [inputId, loadFunction] of Object.entries(searchInputs)) {
-                const searchInput = document.getElementById(inputId);
-                if (searchInput) {
-                    let debounceTimeout;
-                    searchInput.addEventListener('input', function() {
-                        clearTimeout(debounceTimeout);
-                        debounceTimeout = setTimeout(() => {
-                            loadFunction(1);
-                        }, 300);
-                    });
-                }
-            }
-        });
-
-        function showError(message) {
-            const toastEl = document.getElementById('errorToast');
-            const headerEl = toastEl.querySelector('.toast-header');
-            const bodyEl = document.getElementById('errorToastBody');
-
-            // Check if it's a success message
-            const isSuccess = message.toLowerCase().includes('success');
-            
-            // Update toast appearance
-            headerEl.className = `toast-header ${isSuccess ? 'bg-success' : 'bg-danger'} text-white`;
-            headerEl.querySelector('strong').textContent = isSuccess ? 'Success' : 'Error';
-            
-            // Set message
-            bodyEl.textContent = message;
-            
-            // Show toast
-            errorToast.show();
-        }
-
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
-            if (!token || !user) {
-                window.location.href = 'auth.html';
-                return;
-            }
-            currentUser = JSON.parse(user);
-        }
-
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'auth.html';
-        }
-
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.style.display = 'none';
+        function initializeTitleLetterAnimation() {
+            const titleElement = document.querySelector('.animated-title-v5');
+            if (!titleElement) { return; }
+            const text = titleElement.textContent;
+            if (!text) return;
+            titleElement.textContent = '';
+            titleElement.style.opacity = 1;
+            const letterDelayIncrement = 0.06;
+            text.split('').forEach((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = (char === ' ') ? '\u00A0' : char;
+                span.style.animationDelay = `${index * letterDelayIncrement}s`;
+                titleElement.appendChild(span);
             });
-            
-            // Show selected section
-            document.getElementById(sectionName).style.display = 'block';
-            
-            // Update navigation links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active', 'text-primary');
-                if (link.getAttribute('onclick')?.includes(sectionName)) {
-                    link.classList.add('active', 'text-primary');
-                }
-            });
-            
-            // Load section data
-            switch(sectionName) {
-                case 'home':
-                    loadDashboard();
-                    break;
-                case 'products':
-                    loadProducts();
-                    break;
-                case 'orders':
-                    loadOrders();
-                    break;
-                case 'customers':
-                    loadCustomers();
-                    break;
-                case 'analysis':
-                    loadAnalysis();
-                    break;
-            }
         }
-
-        async function loadDashboard() {
-            try {
-                const [dashboardData, lowStockData, recentOrdersData] = await Promise.all([
-                    fetch('/api/dashboard').then(res => res.json()),
-                    fetch('/api/out-of-stock').then(res => res.json()),
-                    fetch('/api/recent-orders').then(res => res.json())
-                ]);
-
-                // Update statistics
-                document.getElementById('totalProducts').textContent = dashboardData.totalProducts;
-                document.getElementById('totalCustomers').textContent = dashboardData.totalCustomers;
-                document.getElementById('totalOrders').textContent = dashboardData.totalOrders;
-                document.getElementById('totalRevenue').textContent = `${parseInt(dashboardData.totalRevenue)/1000}K`;
-
-                // Update low stock table
-                const lowStockTable = document.getElementById('lowStockTable');
-                lowStockTable.innerHTML = lowStockData.map(product => `
-                    <tr>
-                        <td>${product.MaSP}</td>
-                        <td>${product.name}</td>
-                        <td>${product.stock}</td>
-                        <td>${(parseInt(product.price)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
-                        <td><span class="badge bg-${product.stock === 0 ? 'danger' : 'warning'}">${product.stock === 0 ? 'Out of Stock' : 'Low Stock'}</span></td>
-                    </tr>
-                `).join('');
-
-                // Update recent orders table
-                const recentOrdersTable = document.getElementById('recentOrdersTable');
-                recentOrdersTable.innerHTML = recentOrdersData.orders.map(order => `
-                    <tr>
-                        <td>${order.MaDH}</td>
-                        <td>${order.TenKH}</td>
-                        <td>${order.product_name}</td>
-                        <td>${order.SoLuong}</td>
-                        <td>${(parseInt(order.TongTien)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
-                        <td>${new Date(order.NgayDat).toLocaleDateString()}</td>
-                    </tr>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                showError('Error loading dashboard data');
-            }
-        }
-
-        async function loadProducts(page = 1) {
-            try {
-                const searchQuery = document.getElementById('productSearchInput').value;
-                const response = await fetch(`/api/products?page=${page}&search=${searchQuery}&sort=${currentSort.field}&direction=${currentSort.direction}`);
-                const data = await response.json();
-                
-                const productsTable = document.getElementById('productsTable');
-                productsTable.innerHTML = '';
-                
-                data.products.forEach(product => {
-                    const row = document.createElement('tr');
-                    row.className = product.soluong <= 10 ? product.soluong === 0 ? 'table-danger' : 'table-warning' : '';
-                    row.innerHTML = `
-                        <td>${product.MaSP}</td>
-                        <td>${product.name}</td>
-                        <td>${(parseInt(product.price)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
-                        <td>${product.soluong}</td>
-                        <td>${product.star.toFixed(1)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="orderProduct(${product.MaSP})" ${product.soluong === 0 ? 'disabled' : ''}>
-                                Order
-                            </button>
-                        </td>
-                    `;
-                    productsTable.appendChild(row);
-                });
-                
-                updatePagination('productsPagination', page, data.totalPages, loadProducts);
-            } catch (error) {
-                console.error('Error loading products:', error);
-                showError('Error loading products');
-            }
-        }
-
-        async function loadOrders(page = 1) {
-            try {
-                const searchQuery = document.getElementById('orderSearchInput').value;
-                const response = await fetch(`/api/orders?page=${page}&search=${searchQuery}`);
-                const data = await response.json();
-                
-                const ordersTable = document.getElementById('ordersTable');
-                ordersTable.innerHTML = data.orders.map(order => `
-                    <tr>
-                        <td>${order.MaDH}</td>
-                        <td>${order.TenKH}</td>
-                        <td>${order.product_name}</td>
-                        <td>${order.SoLuong}</td>
-                        <td>${(parseInt(order.TongTien)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
-                        <td>${new Date(order.NgayDat).toLocaleDateString()}</td>
-                    </tr>
-                `).join('');
-                
-                updatePagination('ordersPagination', page, data.totalPages, loadOrders);
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                showError('Failed to load orders');
-            }
-        }
-
-        async function loadCustomers(page = 1) {
-            try {
-                const searchQuery = document.getElementById('customerSearchInput').value;
-                const response = await fetch(`/api/customers?page=${page}&search=${searchQuery}`);
-                const data = await response.json();
-                
-                const customersTable = document.getElementById('customersTable');
-                customersTable.innerHTML = data.customers.map(customer => `
-                    <tr>
-                        <td>${customer.MaKH}</td>
-                        <td>${customer.TenKH}</td>
-                        <td>${customer.DiaChi || '-'}</td>
-                        <td>${customer.SoDienThoai || '-'}</td>
-                        <td>${customer.total_orders}</td>
-                        <td>${(parseInt(customer.total_spent)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} VND</td>
-                    </tr>
-                `).join('');
-                
-                updatePagination('customersPagination', page, data.totalPages, loadCustomers);
-            } catch (error) {
-                console.error('Error loading customers:', error);
-                showError('Failed to load customers');
-            }
-        }
-
-        function loadFunction(page) {
-            loadCustomers(page);
-            loadOrders(page);
-            loadProducts(page);
-        }
-
-        function updatePagination(elementId, currentPage, totalPages, loadFunction) {
-            const pagination = document.getElementById(elementId);
-            let html = '';
-            
-            // Calculate range of pages to show
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4) {
-                startPage = Math.max(1, endPage - 4);
-            }
-
-            // Previous button
-            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="loadFunction(${currentPage - 1})">&laquo;</a>
-                    </li>`;
-
-            // First page
-            if (startPage > 1) {
-                html += `<li class="page-item">
-                            <a class="page-link" href="#" onclick="loadFunction(1)">1</a>
-                        </li>`;
-                if (startPage > 2) {
-                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                }
-            }
-
-            // Page numbers
-            for (let i = startPage; i <= endPage; i++) {
-                html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="loadFunction(${i})">${i}</a>
-                        </li>`;
-            }
-
-            // Last page
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                }
-                html += `<li class="page-item">
-                            <a class="page-link" href="#" onclick="loadFunction(${totalPages})">${totalPages}</a>
-                        </li>`;
-            }
-
-            // Next button
-            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                        <a class="page-link" href="#" onclick="loadFunction(${currentPage + 1})">&raquo;</a>
-                    </li>`;
-
-            pagination.innerHTML = html;
-        }
-
-        async function loadAnalysis() {
-            try {
-                const response = await fetch('/api/analysis');
-                const data = await response.json();
-
-                // Revenue by Month Chart
-                new Chart(document.getElementById('revenueChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: data.revenueByMonth.map(item => item.month),
-                        datasets: [{
-                            label: 'Revenue',
-                            data: data.revenueByMonth.map(item => item.revenue),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: value => '$' + value.toLocaleString()
-                                }
-                            }
-                        }
-                    }
-                });
-
-                // Top Products Chart
-                new Chart(document.getElementById('productSalesChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: data.topProductsData.map(d => d.name.length > 20 ? d.name.substring(0, 20) + '...' : d.name),
-                        datasets: [{
-                            label: 'Sales',
-                            data: data.topProductsData.map(d => d.sales),
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            }
-                        }
-                    }
-                });
-
-                // Customer Orders Distribution Chart
-                console.log(data.customerOrdersDistribution)
-                new Chart(document.getElementById('customerOrdersChart'), {
-                    type: 'pie',
-                    data: {
-                        labels: data.customerOrdersDistribution.labels,
-                        datasets: [{
-                            data: data.customerOrdersDistribution.data,
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.5)',
-                                'rgba(54, 162, 235, 0.5)',
-                                'rgba(255, 206, 86, 0.5)',
-                                'rgba(75, 192, 192, 0.5)'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true
-                    }
-                });
-
-                // Stock Level Analysis Chart
-                new Chart(document.getElementById('stockLevelChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Out of Stock', 'Low Stock', 'Adequate Stock'],
-                        datasets: [{
-                            data: [
-                                data.stockLevels.outOfStock,
-                                data.stockLevels.lowStock,
-                                data.stockLevels.adequateStock
-                            ],
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.5)',
-                                'rgba(255, 206, 86, 0.5)',
-                                'rgba(75, 192, 192, 0.5)'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading analysis:', error);
-                showError('Error loading analysis data');
-            }
-        }
-
-        function orderProduct(productId) {
-            document.getElementById('productId').value = productId;
-            document.getElementById('quantity').value = '1';
-            new bootstrap.Modal(document.getElementById('orderModal')).show();
-        }
-
-        async function placeOrder() {
-            const productId = document.getElementById('productId').value;
-            const quantity = parseInt(document.getElementById('quantity').value);
-            
-            if (!productId || !quantity || quantity <= 0) {
-                showError('Please enter a valid product ID and quantity');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/orders', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({
-                        MaSP: productId,
-                        SoLuong: quantity,
-                        MaKH: currentUser.MaKH
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Error placing order');
-                }
-
-                // Close modal and reset form
-                bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
-                document.getElementById('orderForm').reset();
-
-                // Show success message
-                showError('Order placed successfully! Remaining stock: ' + data.remainingStock);
-
-                // Refresh all relevant sections
-                await Promise.all([
-                    loadDashboard(),  // Refresh dashboard stats and low stock
-                    loadOrders(),     // Refresh orders table
-                    loadProducts()    // Refresh products table
-                ]);
-            } catch (error) {
-                console.error('Error placing order:', error);
-                showError(error.message);
-            }
-        }
-
-        function sortProducts(field) {
-            if (currentSort.field === field) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.field = field;
-                currentSort.direction = 'asc';
-            }
-            loadProducts(1);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeTitleLetterAnimation);
+        } else {
+            initializeTitleLetterAnimation();
         }
     </script>
 </body>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Products - ElectroStore</title>
+    <link rel="stylesheet" href="../css/style.css"> <!-- Note path change -->
+    <link rel="stylesheet" href="../css/admin.css"> <!-- Admin specific styles -->
+</head>
+
+<body>
+    <div id="header-placeholder"></div> <!-- Header loaded by main.js -->
+    <main class="container admin-container" id="manage-products-content">
+        <div class="admin-header">
+            <h2>Manage Products</h2>
+            <button id="add-product-btn" class="btn btn-success">Add New Product</button>
+        </div>
+        <!-- Messages Area -->
+        <div id="admin-products-error" class="alert" style="display: none;"></div>
+        <!-- Search -->
+        <div class="mb-2">
+            <label for="admin-product-search">Search Products:</label>
+            <input type="search" id="admin-product-search" placeholder="Search by name or ID..." class="form-control" style="display: inline-block; width: auto; vertical-align: middle; padding: 10px;">
+        </div>
+        <div id="loading-admin-products" style="display: none;" class="text-center p-2">
+            <div class="spinner"></div> Loading products...
+        </div>
+        <!-- Products Table -->
+        <div class="admin-table-container table-responsive">
+            <table id="admin-products-table">
+                <thead>
+                    <tr>
+                        <th>MaSP</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Rating</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-products-tbody">
+                    <!-- Products loaded here -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination-controls mt-2">
+            <button id="admin-prev-page" class="btn btn-secondary" disabled>« Prev</button>
+            <span id="admin-page-info">Page 1 of 1</span>
+            <button id="admin-next-page" class="btn btn-secondary" disabled>Next »</button>
+        </div>
+    </main>
+    <!-- Add/Edit Product Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="product-modal-title">Add New Product</h3>
+                <button class="close-button">×</button>
+            </div>
+            <div id="modal-error-message" class="alert alert-danger" style="display: none;"></div>
+            <form id="product-form">
+                <div class="form-group">
+                    <label for="product-name">Name <span class="text-danger">*</span></label>
+                    <input type="text" id="product-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-price">Price <span class="text-danger">*</span></label>
+                    <input type="number" id="product-price" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-soluong">Quantity (Stock) <span class="text-danger">*</span></label>
+                    <input type="number" id="product-soluong" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="product-star">Star Rating (0-5)</label>
+                    <input type="number" id="product-star" step="0.1" min="0" max="5">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Product</button>
+            </form>
+        </div>
+    </div>
+    <div id="footer-placeholder"></div> <!-- Footer loaded by main.js -->
+    <!-- Core JS & Admin Logic -->
+    <script src="../js/main.js"></script> <!-- Path change -->
+    <script src="../js/cart.js"></script> <!-- Needed for header -->
+    <script src="../js/admin/manageProducts.js"></script> <!-- Path change -->
+    <!-- Optional: Header Component Loading -->
+    <script src="../js/components/header.js"></script> <!-- Path change -->
+</body>
+
+</html>

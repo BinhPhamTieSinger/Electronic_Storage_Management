@@ -1,0 +1,49 @@
+/* === USER DASHBOARD STYLES === */
+.user-dashboard-container {
+    /* Inherits most styles from .container and admin.css widgets/charts */
+}
+
+/* Customize header specifically for user dashboard if needed */
+.user-dashboard-container .admin-header {
+    /* Styles are reused from admin.css */
+    border-bottom-color: var(--primary-color);
+    /* Example user accent */
+}
+
+.user-dashboard-container .admin-header p {
+    color: var(--text-color-muted);
+    margin: 0;
+}
+
+.user-dashboard-container .admin-header #user-dashboard-username {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* Ensure charts fit well */
+#user-charts-section .chart-container {
+    height: 380px;
+    /* Adjust height if needed */
+}
+
+/* Specific styling for user recent orders table */
+#user-recent-orders-table tbody tr:hover {
+    background-color: rgba(74, 144, 226, 0.1);
+    /* Lighter primary hover */
+}
+
+.recent-orders-section .view-all-link {
+    text-align: right;
+    margin-top: 1rem;
+}
+
+.recent-orders-section .view-all-link a {
+    /* Use .btn .btn-secondary styles */
+    font-size: 0.9rem;
+}
+
+#loading-user-dashboard,
+#user-dashboard-error {
+    /* Uses global spinner and alert styles */
+    margin: 2rem 0;
+}

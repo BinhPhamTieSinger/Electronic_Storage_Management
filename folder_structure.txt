@@ -1,0 +1,42 @@
+.
+├── backend/
+│ ├── node_modules/
+│ ├── assets/data/*.csv
+│ ├── config/db.js
+│ ├── app.js
+│ ├── package.json
+│ └── .env
+└── frontend/
+ ├── index.html
+ ├── login.html
+ ├── register.html
+ ├── products.html
+ ├── cart.html
+ ├── orders.html
+ ├── user-dashboard.html
+ ├── admin/
+ │ ├── dashboard.html
+ │ ├── manage-products.html
+ │ └── manage-orders.html
+ ├── css/
+ │ ├── style.css # Global styles (Dark Theme)
+ │ ├── auth.css
+ │ ├── products.css
+ │ ├── cart.css
+ │ ├── admin.css
+ │ └── user-dashboard.css
+ ├── js/
+ │ ├── main.js
+ │ ├── auth.js
+ │ ├── products.js
+ │ ├── cart.js
+ │ ├── orders.js
+ │ ├── user-dashboard.js
+ │ ├── title-animation.js # New for banner title
+ │ ├── admin/
+ │ │ ├── dashboard.js
+ │ │ ├── manageProducts.js
+ │ │ └── manageOrders.js
+ │ └── components/
+ │ └── header.js
+ └── images/ # (Not used for banner, but keep for potential future product images)

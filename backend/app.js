@@ -2,1127 +2,1234 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { parse } = require('csv-parse/sync'); // Fixed CSV parser import
+const {
+    parse
+} = require('csv-parse/sync');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const connection = require('./config/db');
-
+const {
+    sql,
+    connectionString
+} = require('./config/db'); // Use msnodesqlv8 and connectionString
+require('dotenv').config(); // Load .env variables
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Serve static assets (CSS, JS, images) from the frontend directory
 app.use(express.static(path.join(__dirname, '../frontend')));
-
-const JWT_SECRET = 'your-secret-key'; // In production, use environment variable
-
-// Import data from CSV files
-async function importDataFromCSV() {
-    try {
-        // Disable foreign key checks temporarily
-        await connection.promise().query('SET FOREIGN_KEY_CHECKS = 0');
-
-        // Import customers first
-        const customersData = fs.readFileSync(path.join(__dirname, '../assets/data/customers.csv'), 'utf-8');
-        const customers = parse(customersData, {
-            columns: true,
-            skip_empty_lines: true
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secret-key-change-me';
+if (JWT_SECRET === 'your-very-secret-key-change-me') {
+    console.warn("⚠️ WARNING: JWT_SECRET is set to the default value. Please change this in your .env file for security!");
+}
+// --- msnodesqlv8 Helper Functions ---
+function queryAsync(query, params = []) {
+    return new Promise((resolve, reject) => {
+        sql.query(connectionString, query, params, (err, rows) => {
+            if (err) {
+                console.error("msnodesqlv8 query error:", err.message);
+                console.error("Query:", query);
+                console.error("Params:", params);
+                // Construct a more informative error object
+                const detailedError = new Error(`SQL Query Failed: ${err.message}`);
+                detailedError.sqlState = err.sqlState;
+                detailedError.code = err.code;
+                detailedError.query = query;
+                detailedError.params = params;
+                return reject(detailedError);
+            }
+            resolve(rows || []); // Ensure it resolves with an array even if empty
         });
-
-        if (customers.length > 0) {
-            await connection.promise().query('TRUNCATE TABLE customers');
-            const customerValues = customers.map(customer => [
-                customer.MaKH,
-                customer.TenKH,
-                customer.DiaChi,
-                customer.SoDienThoai,
-                customer.Username || null
-            ]);
-            await connection.promise().query(
-                'INSERT INTO customers (MaKH, TenKH, DiaChi, SoDienThoai, Username) VALUES ?',
-                [customerValues]
-            );
-            console.log(`Imported ${customers.length} customers successfully`);
-        }
-
-        // Import products next
-        const productsData = fs.readFileSync(path.join(__dirname, '../assets/data/products.csv'), 'utf-8');
-        const products = parse(productsData, {
-            columns: true,
-            skip_empty_lines: true
-        });
-
-        if (products.length > 0) {
-            await connection.promise().query('TRUNCATE TABLE products');
-            const productValues = products.map(product => [
-                product.MaSP,
-                product.name,
-                parseFloat(product.price) || 0,
-                parseInt(product.soluong) || 0,
-                parseFloat(product.star) || 0
-            ]);
-            await connection.promise().query(
-                'INSERT INTO products (MaSP, name, price, soluong, star) VALUES ?',
-                [productValues]
-            );
-            console.log(`Imported ${products.length} products successfully`);
-        }
-
-        // Finally import orders
-        const ordersData = fs.readFileSync(path.join(__dirname, '../assets/data/orders.csv'), 'utf-8');
-        const orders = parse(ordersData, {
-            columns: true,
-            skip_empty_lines: true
-        });
-
-        if (orders.length > 0) {
-            await connection.promise().query('TRUNCATE TABLE orders');
-            const orderValues = orders.map(order => [
-                order.MaDH,
-                order.MaKH,
-                order.MaSP,
-                parseInt(order.SoLuong) || 0,
-                order.NgayDat,
-                parseFloat(order.TongTien) || 0
-            ]);
-            await connection.promise().query(
-                'INSERT INTO orders (MaDH, MaKH, MaSP, SoLuong, NgayDat, TongTien) VALUES ?',
-                [orderValues]
-            );
-            console.log(`Imported ${orders.length} orders successfully`);
-        }
-
-        // Re-enable foreign key checks
-        await connection.promise().query('SET FOREIGN_KEY_CHECKS = 1');
-    } catch (error) {
-        console.error('Error importing data:', error);
-        // Make sure to re-enable foreign key checks even if there's an error
-        await connection.promise().query('SET FOREIGN_KEY_CHECKS = 1');
-    }
+    });
 }
 
-// Initialize database tables
+function openConnectionAsync() {
+    return new Promise((resolve, reject) => {
+        sql.open(connectionString, (err, conn) => {
+            if (err) {
+                console.error("msnodesqlv8 open connection error:", err);
+                return reject(err);
+            }
+            resolve(conn);
+        });
+    });
+}
+
+function queryOnConnectionAsync(conn, query, params = []) {
+    return new Promise((resolve, reject) => {
+        conn.query(query, params, (err, results) => {
+            if (err) {
+                console.error("msnodesqlv8 query on connection error:", err.message);
+                console.error("Query:", query);
+                console.error("Params:", params);
+                const detailedError = new Error(`SQL Query Failed (Transaction): ${err.message}`);
+                detailedError.sqlState = err.sqlState;
+                detailedError.code = err.code;
+                detailedError.query = query;
+                detailedError.params = params;
+                return reject(detailedError);
+            }
+            resolve(results || []); // Ensure resolves with array
+        });
+    });
+}
+
+function beginTransactionAsync(conn) {
+    return queryOnConnectionAsync(conn, 'BEGIN TRANSACTION');
+}
+
+function commitTransactionAsync(conn) {
+    return queryOnConnectionAsync(conn, 'COMMIT TRANSACTION');
+}
+
+function rollbackTransactionAsync(conn) {
+    return queryOnConnectionAsync(conn, 'ROLLBACK TRANSACTION');
+}
+
+function closeConnectionAsync(conn) {
+    return new Promise((resolve) => {
+        if (conn && typeof conn.close === 'function') {
+            conn.close(() => {
+                // console.log("Connection closed."); // Optional logging
+                resolve();
+            });
+        } else {
+            resolve(); // Resolve if connection is already null or invalid
+        }
+    });
+}
+// --- Import data from CSV files (Robust Version - Skips Existing) ---
+async function importDataFromCSV() {
+    let connection = null;
+    const customerUsernames = new Map(); // Map username to MaKH for efficient lookup
+    try {
+        console.log("📦 Starting CSV data import transaction (skipping existing records)...");
+        connection = await openConnectionAsync();
+        await beginTransactionAsync(connection);
+        console.log(" Disabling foreign key constraints for import...");
+        await queryOnConnectionAsync(connection, 'ALTER TABLE orders NOCHECK CONSTRAINT ALL;').catch(e => console.warn(" Warn: Could not disable FK on orders (maybe first run):", e.message));
+        await queryOnConnectionAsync(connection, 'ALTER TABLE customers NOCHECK CONSTRAINT ALL;').catch(e => console.warn(" Warn: Could not disable FK on customers:", e.message));;
+        console.log(" Foreign keys disabled.");
+        // --- Users (from customers.csv) ---
+        const custCsvPath = path.join(__dirname, 'assets/data/customers.csv'); // Corrected path
+        if (fs.existsSync(custCsvPath)) {
+            console.log(" Reading customers.csv for user creation...");
+            const custCsv = fs.readFileSync(custCsvPath, 'utf-8');
+            const customersData = parse(custCsv, {
+                columns: true,
+                skip_empty_lines: true
+            });
+            const defaultPassword = 'password123'; // Consider making this env var
+            const salt = await bcrypt.genSalt(10);
+            const defaultHashedPassword = await bcrypt.hash(defaultPassword, salt);
+            const userInsertQuery = `
+ IF NOT EXISTS (SELECT 1 FROM users WHERE username = ?)
+ BEGIN
+    INSERT INTO users (username, password, role) VALUES (?, ?, '?');
+ END`;
+            let userCheckedCount = 0;
+            for (const c of customersData) {
+                if (c.Username && c.Username.trim() !== '') {
+                    const username = c.Username.trim();
+                    await queryOnConnectionAsync(connection, userInsertQuery, [username, username, defaultHashedPassword, c.Role]);
+                    customerUsernames.set(username, parseInt(c.MaKH, 10)); // Store mapping
+                    userCheckedCount++;
+                }
+            }
+            console.log(` → Checked/Inserted ${userCheckedCount} users from customers.csv.`);
+        } else {
+            console.warn(" Warning: assets/data/customers.csv not found. Cannot pre-populate users/customers.");
+        }
+        // --- Customers (after users potentially created) ---
+        if (fs.existsSync(custCsvPath)) {
+            console.log(" Checking/Importing Customers...");
+            const custCsv = fs.readFileSync(custCsvPath, 'utf-8'); // Read again or reuse data
+            const customersData = parse(custCsv, {
+                columns: true,
+                skip_empty_lines: true
+            });
+            const custInsertQuery = `
+ BEGIN
+ INSERT INTO customers (TenKH, DiaChi, SoDienThoai, Username) VALUES (?, ?, ?, ?);
+ END`;
+            let custCheckedCount = 0;
+            for (let c of customersData) {
+                const maKH = parseInt(c.MaKH, 10);
+                if (isNaN(maKH)) {
+                    console.warn(` Skipping customer due to invalid MaKH: ${c.MaKH}`);
+                    continue;
+                }
+                const username = c.Username?.trim() || null;
+                // Ensure username exists in our map (meaning user was created/checked) before linking
+                const validUsername = username && customerUsernames.has(username) ? username : null;
+                const params = [c.TenKH, c.DiaChi, c.SoDienThoai, validUsername];
+                await queryOnConnectionAsync(connection, custInsertQuery, params);
+                custCheckedCount++;
+            }
+            console.log(` → Checked/Imported ${custCheckedCount} customers.`);
+        } // No else needed, handled in user check
+        // --- Products ---
+        const prodCsvPath = path.join(__dirname, 'assets/data/products.csv'); // Corrected path
+        if (fs.existsSync(prodCsvPath)) {
+            console.log(" Checking/Importing Products...");
+            const prodCsv = fs.readFileSync(prodCsvPath, 'utf-8');
+            const products = parse(prodCsv, {
+                columns: true,
+                skip_empty_lines: true
+            });
+            const prodInsertQuery = `
+ BEGIN
+ INSERT INTO products (name, price, soluong, star) VALUES (?, ?, ?, ?);
+ END`;
+            let prodCheckedCount = 0;
+            for (let p of products) {
+                const maSP = parseInt(p.MaSP, 10);
+                if (isNaN(maSP)) {
+                    console.warn(` Skipping product due to invalid MaSP: ${p.MaSP}`);
+                    continue;
+                }
+                const params = [
+                    p.name, parseFloat(p.price) || 0,
+                    parseInt(p.soluong, 10) || 0, parseFloat(p.star) || 0
+                ];
+                await queryOnConnectionAsync(connection, prodInsertQuery, params);
+                prodCheckedCount++;
+            }
+            console.log(` → Checked/Imported ${prodCheckedCount} products.`);
+        } else {
+            console.warn(" Warning: assets/data/products.csv not found.");
+        }
+        // --- Orders ---
+        const ordCsvPath = path.join(__dirname, 'assets/data/orders.csv'); // Corrected path
+        if (fs.existsSync(ordCsvPath)) {
+            console.log(" Checking/Importing Orders...");
+            const ordCsv = fs.readFileSync(ordCsvPath, 'utf-8');
+            const orders = parse(ordCsv, {
+                columns: true,
+                skip_empty_lines: true
+            });
+            const orderInsertQuery = `
+ IF NOT EXISTS (SELECT 1 FROM orders WHERE MaDH = ?)
+ BEGIN
+ -- Check FKs before insert within the transaction for better safety
+ IF EXISTS (SELECT 1 FROM customers WHERE MaKH = ?) AND EXISTS (SELECT 1 FROM products WHERE MaSP = ?)
+ BEGIN
+ INSERT INTO orders (MaDH, MaKH, MaSP, SoLuong, NgayDat, TongTien) VALUES (?, ?, ?, ?, ?, ?);
+ END
+ ELSE
+ BEGIN
+ PRINT 'Skipping order MaDH ${"?"} due to missing FK reference.'; -- Cannot parameterize PRINT easily
+ END
+ END`;
+            let orderCheckedCount = 0;
+            for (let o of orders) {
+                const maDH = parseInt(o.MaDH, 10);
+                const maKH = parseInt(o.MaKH, 10);
+                const maSP = parseInt(o.MaSP, 10);
+                if (isNaN(maDH) || isNaN(maKH) || isNaN(maSP)) {
+                    console.warn(` Skipping order due to invalid ID(s): MaDH=${o.MaDH}, MaKH=${o.MaKH}, MaSP=${o.MaSP}`);
+                    continue;
+                }
+                let formattedDateString = null;
+                try {
+                    if (o.NgayDat) {
+                        const parsedDate = new Date(o.NgayDat.trim());
+                        if (!isNaN(parsedDate.getTime())) {
+                            const year = parsedDate.getFullYear();
+                            const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(parsedDate.getDate()).padStart(2, '0');
+                            formattedDateString = `${year}-${month}-${day}`;
+                        } else {
+                            console.warn(` Invalid date value in CSV for MaDH ${maDH}: ${o.NgayDat}`);
+                        }
+                    }
+                } catch (dateError) {
+                    console.warn(` Error parsing date for MaDH ${maDH}: ${o.NgayDat}`);
+                }
+                if (!formattedDateString) {
+                    console.warn(` Skipping order MaDH ${maDH} due to missing or invalid date.`);
+                    continue;
+                }
+                const params = [
+                    maDH, maKH, maSP, // Parameters for FK check
+                    maDH, maKH, maSP, // Parameters for INSERT
+                    parseInt(o.SoLuong, 10) || 0, formattedDateString, parseFloat(o.TongTien) || 0
+                ];
+                try {
+                    await queryOnConnectionAsync(connection, orderInsertQuery, params);
+                    orderCheckedCount++;
+                } catch (insertErr) {
+                    // Catch specific errors if needed, otherwise let the transaction handle rollback
+                    console.error(` Error processing order MaDH ${maDH}: ${insertErr.message}`);
+                    throw insertErr; // Re-throw to trigger rollback
+                }
+            }
+            console.log(` → Checked/Imported ${orderCheckedCount} orders.`);
+        } else {
+            console.warn(" Warning: assets/data/orders.csv not found.");
+        }
+        console.log(" Re-enabling foreign key constraints...");
+        await queryOnConnectionAsync(connection, 'ALTER TABLE customers WITH CHECK CHECK CONSTRAINT ALL;');
+        await queryOnConnectionAsync(connection, 'ALTER TABLE orders WITH CHECK CHECK CONSTRAINT ALL;');
+        console.log(" Foreign keys enabled.");
+        await commitTransactionAsync(connection);
+        console.log("✅ CSV data import transaction committed successfully.");
+    } catch (err) {
+        console.error('❌ CSV Import Error:', err);
+        if (connection) {
+            try {
+                console.log(" Attempting to rollback CSV import transaction...");
+                await rollbackTransactionAsync(connection);
+                console.log(" Transaction rolled back due to error.");
+            } catch (rollbackErr) {
+                // Error 3903: Transaction cannot be rolled back. It has already been rolled back.
+                if (rollbackErr.code === 3903 || rollbackErr.message.includes('already been rolled back')) {
+                    console.log(" Transaction was likely already rolled back by SQL Server.");
+                } else {
+                    console.error(" ❌ Failed to rollback transaction after import error:", rollbackErr);
+                }
+            }
+            // Attempt to re-enable FKs even on failure (best effort)
+            try {
+                console.log(" Attempting to re-enable foreign keys after failed import/rollback...");
+                await queryOnConnectionAsync(connection, 'ALTER TABLE customers WITH CHECK CHECK CONSTRAINT ALL;').catch(e => console.warn(" Warn: Could not re-enable FK on customers:", e.message));;
+                await queryOnConnectionAsync(connection, 'ALTER TABLE orders WITH CHECK CHECK CONSTRAINT ALL;').catch(e => console.warn(" Warn: Could not re-enable FK on orders:", e.message));;
+                console.log(" Foreign keys re-enabled attempt finished.");
+            } catch (enableFkErr) {
+                console.error(" ❌ Failed to re-enable FKs after error:", enableFkErr);
+            }
+        }
+        throw err; // Re-throw error so startServer knows import failed
+    } finally {
+        if (connection) {
+            await closeConnectionAsync(connection);
+        }
+    }
+}
+// --- Initialize database tables (With Role and Alter Check) ---
 async function initDB() {
     try {
-        // Drop existing tables in reverse order of dependencies
-        await connection.promise().query('DROP TABLE IF EXISTS orders');
-        await connection.promise().query('DROP TABLE IF EXISTS customers');
-        await connection.promise().query('DROP TABLE IF EXISTS products');
-        await connection.promise().query('DROP TABLE IF EXISTS users');
-
-        // Create users table if not exists
-        await connection.promise().query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Create customers table if not exists
-        await connection.promise().query(`
-            CREATE TABLE IF NOT EXISTS customers (
-                MaKH INT PRIMARY KEY,
-                TenKH VARCHAR(100) NOT NULL,
-                DiaChi TEXT,
-                SoDienThoai VARCHAR(50),
-                Username VARCHAR(50) UNIQUE,
-                FOREIGN KEY (Username) REFERENCES users(username)
-            )
-        `);
-
-        // Create products table if not exists
-        await connection.promise().query(`
-            CREATE TABLE IF NOT EXISTS products (
-                MaSP INT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                price DECIMAL(15,2) NOT NULL,
-                soluong INT DEFAULT 0,
-                star DECIMAL(3,1) DEFAULT 0
-            )
-        `);
-
-        // Create orders table if not exists
-        await connection.promise().query(`
-            CREATE TABLE IF NOT EXISTS orders (
-                MaDH INT PRIMARY KEY,
-                MaKH INT,
-                MaSP INT,
-                SoLuong INT NOT NULL,
-                NgayDat DATE NOT NULL,
-                TongTien DECIMAL(15,2) NOT NULL,
-                FOREIGN KEY (MaKH) REFERENCES customers(MaKH),
-                FOREIGN KEY (MaSP) REFERENCES products(MaSP)
-            )
-        `);
-
-        // Import all data
-        await importDataFromCSV();
-
-    } catch (error) {
-        console.error('Database initialization error:', error);
+        console.log("📦 Checking database schema...");
+        // Check if users table exists
+        const checkTableQuery = "SELECT OBJECT_ID('dbo.users', 'U') AS table_id;";
+        const checkResult = await queryAsync(checkTableQuery);
+        const needsCreation = !checkResult[0]?.table_id;
+        if (needsCreation) {
+            console.log(" Schema does not appear to exist. Creating tables...");
+            await queryAsync(`
+ IF OBJECT_ID('dbo.users', 'U') IS NULL BEGIN
+ CREATE TABLE users (
+ id INT IDENTITY(1,1) PRIMARY KEY,
+ username VARCHAR(50) UNIQUE NOT NULL,
+ password VARCHAR(255) NOT NULL,
+ role VARCHAR(10) NOT NULL DEFAULT 'user', -- 'user', 'employee', 'admin'
+ created_at DATETIME2 DEFAULT GETDATE()
+ ); PRINT 'Created users table.'; END
+ `);
+            await queryAsync(`
+ IF OBJECT_ID('dbo.products', 'U') IS NULL BEGIN
+ CREATE TABLE products (
+ MaSP INT IDENTITY(1,1) PRIMARY KEY,
+ name NVARCHAR(255) NOT NULL,
+ price DECIMAL(15, 2) NOT NULL CHECK (price >= 0),
+ soluong INT DEFAULT 0 CHECK (soluong >= 0),
+ star DECIMAL(3, 1) DEFAULT 0 CHECK (star >= 0 AND star <= 5),
+ created_at DATETIME2 DEFAULT GETDATE() -- Added created_at
+ ); PRINT 'Created products table.'; END
+ `);
+            await queryAsync(`
+ IF OBJECT_ID('dbo.customers', 'U') IS NULL BEGIN
+ CREATE TABLE customers (
+ MaKH INT IDENTITY(1, 1) PRIMARY KEY,
+ TenKH NVARCHAR(100) NOT NULL,
+ DiaChi NVARCHAR(MAX),
+ SoDienThoai VARCHAR(50),
+ Username VARCHAR(50) UNIQUE, -- Can be NULL if customer registers without linking immediately
+ CONSTRAINT FK_customers_users FOREIGN KEY (Username) REFERENCES users(username)
+ ON DELETE SET NULL ON UPDATE CASCADE -- Allow user deletion without forcing customer deletion initially
+ ); PRINT 'Created customers table.'; END
+ `);
+            await queryAsync(`
+ IF OBJECT_ID('dbo.orders', 'U') IS NULL BEGIN
+ CREATE TABLE orders (
+ MaDH INT PRIMARY KEY,
+ MaKH INT,
+ MaSP INT,
+ SoLuong INT NOT NULL CHECK (SoLuong > 0),
+ NgayDat DATE NOT NULL,
+ TongTien DECIMAL(15, 2) NOT NULL CHECK (TongTien >= 0),
+ CONSTRAINT FK_orders_customers FOREIGN KEY (MaKH) REFERENCES customers(MaKH) ON DELETE NO ACTION, -- Don't delete order if customer deleted
+ CONSTRAINT FK_orders_products FOREIGN KEY (MaSP) REFERENCES products(MaSP) ON DELETE NO ACTION -- Don't delete order if product deleted
+ ); PRINT 'Created orders table.'; END
+ `);
+            console.log("✅ Database schema creation complete.");
+            return true; // Indicate that tables were created
+        } else {
+            console.log(" Schema tables likely exist. Checking for necessary columns/constraints...");
+            // Check for 'role' column in 'users'
+            const checkRoleColumnQuery = `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'`;
+            const roleColumnResult = await queryAsync(checkRoleColumnQuery);
+            if (roleColumnResult.length === 0) {
+                console.log(" Adding 'role' column to existing 'users' table...");
+                await queryAsync(`ALTER TABLE users ADD role VARCHAR(10) NOT NULL DEFAULT 'user';`);
+                console.log(" ✅ 'role' column added.");
+            }
+            // Check for 'created_at' column in 'products'
+            const checkProdCreateColQuery = `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = 'products' AND COLUMN_NAME = 'created_at'`;
+            const prodCreateColResult = await queryAsync(checkProdCreateColQuery);
+            if (prodCreateColResult.length === 0) {
+                console.log(" Adding 'created_at' column to existing 'products' table...");
+                await queryAsync(`ALTER TABLE products ADD created_at DATETIME2 DEFAULT GETDATE();`);
+                console.log(" ✅ 'created_at' column added to products.");
+            }
+            console.log("✅ Database schema check complete.");
+            return false; // Indicate tables already existed (or were potentially altered)
+        }
+    } catch (err) {
+        console.error('❌ initDB Error:', err);
+        throw err; // Re-throw the error to be caught by startServer
     }
 }
-
-// Authentication middleware
+// --- AUTH MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    console.log(`[Auth Middleware] Path: ${req.path}, Method: ${req.method}. Token provided: ${token ? 'Yes' : 'No'}`);
 
+    // **MODIFICATION**: Allow page requests through even without token initially.
+    // The protection will happen on the specific route definition using requireRole.
     if (!token) {
-        return res.status(401).json({ error: 'Access denied' });
+        console.log(`[Auth Middleware] No token for ${req.path}. Proceeding.`);
+        return next(); // Proceed without setting req.user
     }
 
     try {
-        const verified = jwt.verify(token, JWT_SECRET);
-        req.user = verified;
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        console.log(`[Auth Middleware] Token verified successfully. req.user set to:`, JSON.stringify(req.user));
         next();
     } catch (error) {
-        res.status(400).json({ error: 'Invalid token' });
+        console.warn(`[Auth Middleware] Token verification FAILED. Error:`, error.message);
+        // Invalid token, proceed without setting req.user
+        next();
     }
 };
 
-// Register new user
+// --- Role Middleware (Checks if req.user exists AND has the role) ---
+const requireRole = (roles) => {
+    return (req, res, next) => {
+      console.log(`[Role Middleware] Checking access for Path: ${req.path}. Required: ${roles.join(', ')}. User attached: ${!!req.user}`);
+      if (!req.user) {
+        console.warn(`[Role Middleware] Access DENIED (401): No valid user found in request.`);
+         // Redirect to login for page access failures?
+         // Or just send 401? Redirect is often better UX for pages.
+         return res.redirect(`/login?message=Please log in to access this page.&type=warning&redirect=${encodeURIComponent(req.originalUrl)}`);
+         // return res.status(401).json({ error: 'Unauthorized: Authentication required.' });
+      }
+      if (!roles.includes(req.user.role)) {
+        console.warn(`[Role Middleware] Access DENIED (403): User '${req.user.username}' (Role: ${req.user.role}) lacks required role: ${roles.join(', ')}.`);
+         // Send a forbidden error page or message
+         return res.status(403).send(`<h2>Forbidden</h2><p>You do not have permission to access this page.</p><a href="/">Go Home</a>`);
+         // return res.status(403).json({ error: 'Forbidden: Insufficient permissions.' });
+      }
+      console.log(`[Role Middleware] Access GRANTED for ${req.user.username} (${req.user.role}).`);
+      next();
+    };
+  };
+// --- API Endpoints ---
+// Register new user (Defaults role to 'user')
 app.post('/api/register', async (req, res) => {
+    const {
+        username,
+        password,
+        confirmPassword,
+        tenKH,
+        diaChi,
+        soDienThoai
+    } = req.body;
+    if (!username || !password || !tenKH) {
+        return res.status(400).json({
+            error: 'Username, password, and Full Name (TenKH) are required.'
+        });
+    }
+    if (password.length < 6) {
+        return res.status(400).json({
+            error: 'Password must be at least 6 characters long.'
+        });
+    }
+    if (password !== confirmPassword) {
+        return res.status(400).json({
+            error: 'Passwords do not match'
+        });
+    }
+    let connection = null;
     try {
-        const { username, password, confirmPassword, tenKH, diaChi, soDienThoai } = req.body;
-
-        // Validation
-        if (password !== confirmPassword) {
-            return res.status(400).json({ error: 'Passwords do not match' });
-        }
-
-        // Check if username exists
-        const [existingUser] = await connection.promise().query(
-            'SELECT username FROM users WHERE username = ?',
-            [username]
-        );
-
+        connection = await openConnectionAsync();
+        await beginTransactionAsync(connection);
+        // Check if username already exists
+        const userCheckQuery = 'SELECT id FROM users WHERE username = ?';
+        const existingUser = await queryOnConnectionAsync(connection, userCheckQuery, [username]);
         if (existingUser.length > 0) {
-            return res.status(400).json({ error: 'Username already exists' });
+            await rollbackTransactionAsync(connection); // Rollback before sending response
+            await closeConnectionAsync(connection);
+            return res.status(409).json({
+                error: 'Username already exists'
+            }); // 409 Conflict
         }
-
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Get next customer ID
-        const [lastCustomer] = await connection.promise().query(
-            'SELECT MAX(CAST(MaKH AS SIGNED)) as lastId FROM customers'
-        );
-        const nextCustomerId = (lastCustomer[0].lastId || 0) + 1;
-
-        // Begin transaction
-        await connection.promise().beginTransaction();
-
-        // Create user
-        await connection.promise().query(
-            'INSERT INTO users (username, password) VALUES (?, ?)',
-            [username, hashedPassword]
-        );
-
-        // Create customer
-        await connection.promise().query(
-            'INSERT INTO customers (MaKH, TenKH, DiaChi, SoDienThoai, Username) VALUES (?, ?, ?, ?, ?)',
-            [nextCustomerId.toString(), tenKH, diaChi, soDienThoai, username]
-        );
-
-        await connection.promise().commit();
-
-        res.json({ success: true, message: 'Registration successful' });
+        // Get next available MaKH (simple MAX + 1, consider gaps or sequences for production)
+        const lastCustomerRows = await queryOnConnectionAsync(connection, 'SELECT MAX(MaKH) as lastId FROM customers');
+        const nextCustomerId = (lastCustomerRows[0]?.lastId || 0) + 1;
+        // Insert user with 'user' role
+        const insertUserQuery = 'INSERT INTO users (username, password, role) VALUES (?, ?, ?)';
+        await queryOnConnectionAsync(connection, insertUserQuery, [username, hashedPassword, 'user']);
+        // Insert associated customer record
+        const insertCustomerQuery = `INSERT INTO customers (TenKH, DiaChi, SoDienThoai, Username) VALUES (?, ?, ?, ?)`;
+        await queryOnConnectionAsync(connection, insertCustomerQuery, [
+            tenKH, diaChi || null, soDienThoai || null, username
+        ]);
+        await commitTransactionAsync(connection);
+        res.status(201).json({
+            success: true,
+            message: 'Registration successful'
+        });
     } catch (error) {
-        await connection.promise().rollback();
-        res.status(500).json({ error: error.message });
+        console.error('Registration Error:', error);
+        if (connection) {
+            try {
+                await rollbackTransactionAsync(connection);
+            } catch (rbErr) {
+                console.error('Rollback failed during error handling:', rbErr);
+            }
+        }
+        // Check for specific SQL errors like UNIQUE constraint violation (though checked above)
+        if (error.code === 2627 || (error.message && error.message.includes('UNIQUE KEY'))) {
+            res.status(409).json({
+                error: 'Username or associated customer ID might already exist.'
+            });
+        } else {
+            res.status(500).json({
+                error: 'Registration failed due to a server error.'
+            });
+        }
+    } finally {
+        if (connection) {
+            await closeConnectionAsync(connection);
+        }
     }
 });
-
 // Login
 app.post('/api/login', async (req, res) => {
+    const {
+        username,
+        password
+    } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({
+            error: 'Username and password are required'
+        });
+    }
     try {
-        const { username, password } = req.body;
-
-        // Get user
-        const [users] = await connection.promise().query(
-            'SELECT u.*, c.MaKH FROM users u JOIN customers c ON u.username = c.Username WHERE u.username = ?',
-            [username]
-        );
-
+        const query = `
+ SELECT u.id, u.username, u.password, u.role, c.MaKH
+ FROM users u
+ LEFT JOIN customers c ON u.username = c.Username
+ WHERE u.username = ?`;
+        const users = await queryAsync(query, [username]);
         if (users.length === 0) {
-            return res.status(400).json({ error: 'User not found' });
+            return res.status(401).json({
+                error: 'Invalid username or password'
+            });
         }
-
         const user = users[0];
-
-        // Validate password
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
-            return res.status(400).json({ error: 'Invalid password' });
+            return res.status(401).json({
+                error: 'Invalid username or password'
+            });
         }
-
-        // Create token
-        const token = jwt.sign(
-            { id: user.id, username: user.username, MaKH: user.MaKH },
-            JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
+        // Create JWT Payload
+        const tokenPayload = {
+            id: user.id,
+            username: user.username,
+            MaKH: user.MaKH, // Will be null if user is admin/employee without customer record
+            role: user.role
+        };
+        const token = jwt.sign(tokenPayload, JWT_SECRET, {
+            expiresIn: '1h'
+        }); // 1 hour expiry
+        // Return token and user info (including role)
         res.json({
             token,
-            user: {
+            user: { // Send essential non-sensitive info
                 username: user.username,
-                MaKH: user.MaKH
+                MaKH: user.MaKH,
+                role: user.role
             }
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Login Error:', error);
+        res.status(500).json({
+            error: 'Login failed due to a server error.'
+        });
     }
 });
-
-// Protected API Routes
-app.post('/api/order', authenticateToken, async (req, res) => {
-    const { MaSP, SoLuong } = req.body;
-    const MaKH = req.user.MaKH;
-    
+// Get Logged-in User Info (Protected by authenticateToken setting req.user)
+app.get('/api/auth/me', authenticateToken, (req, res) => {
+    if (!req.user) {
+        // This happens if token was missing, invalid, or expired
+        return res.status(401).json({
+            error: 'Unauthorized: No valid token provided.'
+        });
+    }
+    // Send back the user data obtained from the validated token
+    res.json(req.user);
+});
+// Get All Products (Public, but uses authenticateToken to potentially check req.user later if needed)
+app.get('/api/products', authenticateToken, async (req, res) => {
     try {
-        // Check product availability
-        const [product] = await connection.promise().query(
-            'SELECT price, soluong FROM products WHERE MaSP = ?',
-            [MaSP]
-        );
-        
-        if (!product.length) {
-            return res.status(404).json({ error: 'Product not found' });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10; // Adjusted default limit
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+
+        // --- Refined Sorting Logic ---
+        const requestedSort = req.query.sort || 'MaSP'; // Get requested sort field
+        const direction = req.query.direction?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+        // Map frontend sort parameters (case-insensitive keys) to actual DB columns
+        const sortColumnMap = {
+            'masp': 'MaSP',
+            'name': 'name',
+            'price': 'price',
+            'soluong': 'soluong',
+            'star': 'star',
+            'created_at': 'created_at'
+        };
+
+        // Find the actual DB column name, defaulting to 'MaSP' if invalid/missing
+        const sortField = sortColumnMap[requestedSort.toLowerCase()] || 'MaSP';
+        const sortDirection = direction; // Already validated 'ASC' or 'DESC'
+
+        console.log(`[API /products] Request Params: page=${page}, limit=${limit}, search='${search}', sort='${requestedSort}', direction='${direction}'`);
+        console.log(`[API /products] Resolved Sorting: Field='${sortField}', Direction='${sortDirection}'`); // Log resolved sort
+
+        // --- End Refined Sorting Logic ---
+
+
+        const params = [];
+        let whereClause = '';
+        if (search) {
+            // Search name OR ID (ensure CAST is correct for your SQL Server version)
+            whereClause = `WHERE name LIKE ? OR CAST(MaSP AS VARCHAR(20)) LIKE ?`;
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm);
         }
 
-        if (product[0].soluong < SoLuong) {
-            return res.status(400).json({ error: 'Insufficient inventory' });
+        // Count total items matching search
+        const countQuery = `SELECT COUNT(*) as total FROM products ${whereClause}`;
+        const countQueryParams = [...params]; // Params for count query
+
+
+        // Construct ORDER BY clause carefully
+        let orderByClause = `ORDER BY [${sortField}] ${sortDirection}`; // Use square brackets for safety with potential reserved words
+        // Add secondary sort by MaSP ASC only if the primary sort is NOT MaSP
+        // This prevents ORDER BY MaSP DESC, MaSP ASC which might be confusing/inefficient
+        if (sortField !== 'MaSP') {
+            orderByClause += `, [MaSP] ASC`;
         }
 
-        const TongTien = product[0].price * SoLuong;
-        const [lastOrder] = await connection.promise().query(
-            'SELECT MAX(MaDH) as lastId FROM orders'
-        );
-        const MaDH = (lastOrder[0].lastId || 0) + 1;
-        const NgayDat = new Date();
 
-        await connection.promise().beginTransaction();
-
-        // Create order
-        await connection.promise().query(
-            'INSERT INTO orders SET ?',
-            { MaDH, MaKH, MaSP, SoLuong, NgayDat, TongTien }
-        );
-
-        // Update inventory
-        await connection.promise().query(
-            'UPDATE products SET soluong = soluong - ? WHERE MaSP = ?',
-            [SoLuong, MaSP]
-        );
-
-        await connection.promise().commit();
-        res.json({ success: true, orderId: MaDH });
-    } catch (error) {
-        await connection.promise().rollback();
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/monthly-sales', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                DATE_FORMAT(NgayDat, '%Y-%m') as month,
-                SUM(TongTien) as total_sales
-            FROM orders
-            GROUP BY month
-            ORDER BY month
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/top-customers', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                c.MaKH,
-                c.TenKH,
-                COALESCE(SUM(o.SoLuong), 0) as total_quantity,
-                COALESCE(SUM(o.TongTien), 0) as total_spent
-            FROM customers c
-            LEFT JOIN orders o ON c.MaKH = o.MaKH
-            GROUP BY c.MaKH, c.TenKH
-            ORDER BY total_quantity DESC
-            LIMIT 10
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// New endpoints for additional functionality
-app.get('/api/daily-sales', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                DATE(NgayDat) as date,
-                SUM(SoLuong) as total_products,
-                SUM(TongTien) as total_amount
-            FROM orders
-            GROUP BY DATE(NgayDat)
-            ORDER BY date DESC
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/product-sales', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                p.MaSP,
-                p.name,
-                COALESCE(SUM(o.TongTien), 0) as total_revenue,
-                COALESCE(SUM(o.SoLuong), 0) as total_sold
-            FROM products p
-            LEFT JOIN orders o ON p.MaSP = o.MaSP
-            GROUP BY p.MaSP, p.name
-            ORDER BY total_revenue DESC
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/out-of-stock', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT MaSP, name, price, soluong as stock, star
+        // Get paginated data query
+        const dataQuery = `
+            SELECT MaSP, name, price, soluong, star, created_at
             FROM products
-            WHERE soluong <= 10 AND soluong > 0
-            ORDER BY soluong ASC, price DESC
-            LIMIT 10
-        `);
-        res.json(results);
-    } catch (error) {
-        console.error('Error fetching low stock products:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+            ${whereClause}
+            ${orderByClause}
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;`;
 
-app.get('/api/inactive-customers', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai,
-                   MAX(o.NgayDat) as last_order_date,
-                   COUNT(o.MaDH) as total_orders
-            FROM customers c
-            LEFT JOIN orders o ON c.MaKH = o.MaKH
-            GROUP BY c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai
-            HAVING last_order_date IS NULL OR last_order_date < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            ORDER BY last_order_date ASC
-            LIMIT 10
-        `);
-        res.json(results);
-    } catch (error) {
-        console.error('Error fetching inactive customers:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+        // Add pagination params AFTER search params for the data query
+        const dataQueryParams = [...params, offset, limit];
 
-app.get('/api/customer-product-counts', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                c.MaKH,
-                c.TenKH,
-                p.MaSP,
-                p.name as product_name,
-                COUNT(o.MaDH) as order_count,
-                SUM(o.SoLuong) as total_quantity
-            FROM customers c
-            CROSS JOIN products p
-            LEFT JOIN orders o ON c.MaKH = o.MaKH AND p.MaSP = o.MaSP
-            GROUP BY c.MaKH, c.TenKH, p.MaSP, p.name
-            HAVING total_quantity > 0
-            ORDER BY c.MaKH, total_quantity DESC
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        console.log("[API /products] Count Query:", countQuery, countQueryParams);
+        console.log("[API /products] Data Query:", dataQuery, dataQueryParams);
 
-app.get('/api/top-monthly-product', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            WITH MonthlyProductSales AS (
-                SELECT 
-                    p.MaSP,
-                    p.name,
-                    DATE_FORMAT(o.NgayDat, '%Y-%m') as month,
-                    SUM(o.TongTien) as monthly_revenue,
-                    RANK() OVER (PARTITION BY DATE_FORMAT(o.NgayDat, '%Y-%m') 
-                                ORDER BY SUM(o.TongTien) DESC) as revenue_rank
-                FROM products p
-                JOIN orders o ON p.MaSP = o.MaSP
-                GROUP BY p.MaSP, p.name, month
-            )
-            SELECT *
-            FROM MonthlyProductSales
-            WHERE revenue_rank = 1
-            ORDER BY month DESC
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
-app.get('/api/sales-by-period', async (req, res) => {
-    try {
-        const { startDate, endDate } = req.query;
-        const [results] = await connection.promise().query(`
-            SELECT 
-                p.MaSP,
-                p.name,
-                SUM(o.SoLuong) as total_quantity,
-                SUM(o.TongTien) as total_revenue
-            FROM orders o
-            JOIN products p ON o.MaSP = p.MaSP
-            WHERE DATE(o.NgayDat) BETWEEN ? AND ?
-            GROUP BY p.MaSP, p.name
-            ORDER BY total_quantity DESC
-        `, [startDate, endDate]);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        // Execute queries
+        const [countResult, dataResult] = await Promise.all([
+            queryAsync(countQuery, countQueryParams),
+            queryAsync(dataQuery, dataQueryParams)
+        ]);
 
-app.get('/api/largest-single-order', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                o.MaDH,
-                o.NgayDat,
-                p.MaSP,
-                p.name,
-                o.SoLuong,
-                o.TongTien,
-                c.TenKH
-            FROM orders o
-            JOIN products p ON o.MaSP = p.MaSP
-            JOIN customers c ON o.MaKH = c.MaKH
-            WHERE o.TongTien = (
-                SELECT MAX(TongTien)
-                FROM orders
-            )
-        `);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        const totalItems = countResult[0]?.total || 0;
+        const totalPages = Math.ceil(totalItems / limit);
 
-// Get dashboard statistics
-app.get('/api/dashboard', async (req, res) => {
-    try {
-        const [totalOrders] = await connection.promise().query('SELECT COUNT(*) as count, SUM(TongTien) as total FROM orders');
-        const [totalProducts] = await connection.promise().query('SELECT COUNT(*) as count FROM products');
-        const [totalCustomers] = await connection.promise().query('SELECT COUNT(*) as count FROM customers');
-        
+        console.log(`[API /products] Found ${totalItems} total items, ${totalPages} total pages.`);
+
         res.json({
-            totalOrders: totalOrders[0].count || 0,
-            totalRevenue: totalOrders[0].total || 0,
-            totalProducts: totalProducts[0].count || 0,
-            totalCustomers: totalCustomers[0].count || 0
+            products: dataResult,
+            currentPage: page,
+            totalPages: totalPages,
+            totalItems: totalItems
+        });
+
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        // Send back more specific error details if available from the queryAsync helper
+        res.status(500).json({
+            error: 'Failed to retrieve products.',
+            details: error.message // Include DB error message if possible
+        });
+    }
+});
+// Add Product (Admin/Employee Protected)
+app.post('/api/products', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
+    const {
+        name,
+        price,
+        soluong,
+        star
+    } = req.body;
+    // Validation
+    if (!name || price === undefined || soluong === undefined) {
+        return res.status(400).json({
+            error: 'name, price, and soluong are required'
+        });
+    }
+    const priceNum = parseFloat(price);
+    const soluongNum = parseInt(soluong);
+    const starNum = parseFloat(star || 0);
+    if (isNaN(priceNum) || isNaN(soluongNum) || isNaN(starNum)) {
+        return res.status(400).json({
+            error: 'price, soluong, and star must be valid numbers.'
+        });
+    }
+    if (priceNum < 0 || soluongNum < 0 || starNum < 0 || starNum > 5) {
+        return res.status(400).json({
+            error: 'Invalid input: IDs must be positive, price/stock non-negative, star rating 0-5.'
+        });
+    }
+    try {
+        // Adjust query to select the inserted product directly
+        const insertAndSelectQuery = `
+ INSERT INTO products (name, price, soluong, star) VALUES (?, ?, ?, ?);
+ `;
+        // Pass MaSP twice for the final SELECT
+        const result = await queryAsync(insertAndSelectQuery, [name, priceNum, soluongNum, starNum]);
+        res.status(201).json({
+            success: true,
+            message: 'Product added successfully',
+            product: {
+                MaSP: result.insertId, // Assuming insertId is available from the driver
+                name,
+                price: priceNum,
+                soluong: soluongNum,
+                star: starNum
+            }
+        });
+
+
+    } catch (error) {
+        console.error("Error adding product:", error);
+        res.status(500).json({
+            error: 'Failed to add product due to server error.'
+        });
+    }
+});
+// Update Product (Admin/Employee Protected)
+app.put('/api/products/:masp', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
+    const MaSP_Param = parseInt(req.params.masp);
+    const {
+        name,
+        price,
+        soluong,
+        star
+    } = req.body;
+    if (isNaN(MaSP_Param)) {
+        return res.status(400).json({
+            error: 'Invalid product MaSP provided in URL.'
+        });
+    }
+    // Allow updating individual fields
+    if (name === undefined && price === undefined && soluong === undefined && star === undefined) {
+        return res.status(400).json({
+            error: 'At least one field (name, price, soluong, star) must be provided for update.'
+        });
+    }
+    // Validate provided fields
+    const priceNum = price !== undefined ? parseFloat(price) : undefined;
+    const soluongNum = soluong !== undefined ? parseInt(soluong) : undefined;
+    const starNum = star !== undefined ? parseFloat(star) : undefined;
+    if ((priceNum !== undefined && isNaN(priceNum)) || (soluongNum !== undefined && isNaN(soluongNum)) || (starNum !== undefined && isNaN(starNum))) {
+        return res.status(400).json({
+            error: 'If provided, price, soluong, and star must be valid numbers.'
+        });
+    }
+    if ((priceNum !== undefined && priceNum < 0) || (soluongNum !== undefined && soluongNum < 0) || (starNum !== undefined && (starNum < 0 || starNum > 5))) {
+        return res.status(400).json({
+            error: 'Invalid input: Price/stock non-negative, star rating 0-5.'
+        });
+    }
+    // Build the dynamic SET clause
+    let setClauses = [];
+    const params = [];
+    if (name !== undefined) {
+        setClauses.push('name = ?');
+        params.push(name);
+    }
+    if (priceNum !== undefined) {
+        setClauses.push('price = ?');
+        params.push(priceNum);
+    }
+    if (soluongNum !== undefined) {
+        setClauses.push('soluong = ?');
+        params.push(soluongNum);
+    }
+    if (starNum !== undefined) {
+        setClauses.push('star = ?');
+        params.push(starNum);
+    }
+    if (setClauses.length === 0) {
+        // Should have been caught earlier, but good fallback
+        return res.status(400).json({
+            error: 'No valid fields provided for update.'
+        });
+    }
+    params.push(MaSP_Param); // Add MaSP for WHERE clause
+    // Use OUTPUT clause to get updated row directly (more efficient)
+    const query = `
+ UPDATE products
+ SET ${setClauses.join(', ')}
+ OUTPUT inserted.* -- Return the updated row
+ WHERE MaSP = ?;`;
+    try {
+        const result = await queryAsync(query, params);
+        if (result.length > 0) {
+            res.json(result[0]); // Return the updated product data
+        } else {
+            // No rows affected means product with that MaSP didn't exist
+            res.status(404).json({
+                error: 'Product not found'
+            });
+        }
+    } catch (error) {
+        console.error(`Error updating product ${MaSP_Param}:`, error);
+        res.status(500).json({
+            error: 'Failed to update product due to server error.'
+        });
+    }
+});
+// Delete Product (Admin/Employee Protected)
+app.delete('/api/products/:masp', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
+    const MaSP_Param = parseInt(req.params.masp);
+    if (isNaN(MaSP_Param)) {
+        return res.status(400).json({
+            error: 'Invalid product MaSP provided.'
+        });
+    }
+    let connection = null;
+    try {
+        connection = await openConnectionAsync();
+        await beginTransactionAsync(connection);
+        // Check if product is referenced in orders
+        const orderCheckQuery = 'SELECT COUNT(*) as count FROM orders WHERE MaSP = ?';
+        const orderCheckResult = await queryOnConnectionAsync(connection, orderCheckQuery, [MaSP_Param]);
+        if (orderCheckResult[0]?.count > 0) {
+            await rollbackTransactionAsync(connection); // Rollback before sending error
+            await closeConnectionAsync(connection);
+            return res.status(409).json({
+                error: `Cannot delete product ${MaSP_Param} because it exists in ${orderCheckResult[0].count} order(s). Consider marking it as unavailable instead.`
+            });
+        }
+        // Proceed with deletion
+        const deleteQuery = `DELETE FROM products WHERE MaSP = ?;`;
+        // To check if delete worked, we can query before delete or check affected rows if driver supports it.
+        // Let's try simple delete and assume success if no FK error.
+        const result = await queryOnConnectionAsync(connection, deleteQuery, [MaSP_Param]);
+        // msnodesqlv8 might not return affected rows easily here.
+        // We rely on the FK check above. If it passed, deletion should succeed unless product doesn't exist.
+        // A SELECT before DELETE could confirm existence if needed.
+        await commitTransactionAsync(connection);
+        // If delete happened without error, send 204
+        res.status(204).send(); // No Content indicates success
+    } catch (error) {
+        console.error(`Error deleting product ${MaSP_Param}:`, error);
+        if (connection) {
+            try {
+                await rollbackTransactionAsync(connection);
+            } catch (rbErr) {}
+        }
+        // Handle potential errors like product not found if not caught by logic
+        res.status(500).json({
+            error: 'Failed to delete product due to a server error.'
+        });
+    } finally {
+        if (connection) {
+            await closeConnectionAsync(connection);
+        }
+    }
+});
+// Place new order (User Protected)
+// NOTE: This still handles ONE item per API call. Needs refactoring for multi-item cart checkout.
+app.post('/api/orders', authenticateToken, requireRole(['user']), async (req, res) => {
+    const {
+        MaSP,
+        SoLuong
+    } = req.body;
+    const MaKH = req.user.MaKH; // Get MaKH from the validated token
+    if (!MaKH) {
+        return res.status(403).json({
+            error: 'Placing orders requires a linked customer account.'
+        });
+    }
+    const maSPNum = parseInt(MaSP);
+    const soLuongNum = parseInt(SoLuong);
+    if (isNaN(maSPNum) || isNaN(soLuongNum) || soLuongNum <= 0) {
+        return res.status(400).json({
+            error: 'Valid Product ID (MaSP) and positive Quantity (SoLuong) are required.'
+        });
+    }
+    let connection = null;
+    try {
+        connection = await openConnectionAsync();
+        await beginTransactionAsync(connection);
+        // 1. Check Product Existence & Stock (and lock row if possible/needed for high concurrency)
+        // FOR UPDATE hint isn't directly supported, rely on transaction isolation
+        const productQuery = 'SELECT price, soluong FROM products WHERE MaSP = ?';
+        const productResult = await queryOnConnectionAsync(connection, productQuery, [maSPNum]);
+        if (productResult.length === 0) {
+            await rollbackTransactionAsync(connection);
+            await closeConnectionAsync(connection);
+            return res.status(404).json({
+                error: `Product with ID ${maSPNum} not found.`
+            });
+        }
+        const product = productResult[0];
+        if (product.soluong < soLuongNum) {
+            await rollbackTransactionAsync(connection);
+            await closeConnectionAsync(connection);
+            return res.status(409).json({
+                error: `Insufficient stock for product ID ${maSPNum}. Only ${product.soluong} available.`
+            }); // 409 Conflict
+        }
+        // 2. Calculate Total & Get Next Order ID
+        const TongTien = product.price * soLuongNum;
+        const lastOrderRows = await queryOnConnectionAsync(connection, 'SELECT MAX(MaDH) as lastId FROM orders');
+        const MaDH = (lastOrderRows[0]?.lastId || 0) + 1; // Simple increment
+        const NgayDat = new Date().toISOString().slice(0, 10); // Format as YYYY-MM-DD
+        // 3. Insert Order
+        const insertOrderQuery = `INSERT INTO orders (MaDH, MaKH, MaSP, SoLuong, NgayDat, TongTien) VALUES (?, ?, ?, ?, ?, ?);`;
+        await queryOnConnectionAsync(connection, insertOrderQuery, [
+            MaDH, MaKH, maSPNum, soLuongNum, NgayDat, TongTien
+        ]);
+        // 4. Update Product Stock
+        const updateProductQuery = `UPDATE products SET soluong = soluong - ? WHERE MaSP = ?;`;
+        await queryOnConnectionAsync(connection, updateProductQuery, [soLuongNum, maSPNum]);
+        // 5. Commit Transaction
+        await commitTransactionAsync(connection);
+        // 6. Send Success Response
+        res.status(201).json({
+            success: true,
+            orderId: MaDH,
+            message: "Order placed successfully"
+            // Optionally return the full order details if needed by frontend
         });
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Order Placement Error:', error);
+        if (connection) {
+            try {
+                await rollbackTransactionAsync(connection);
+            } catch (rbErr) {
+                console.error('Rollback failed during order placement error:', rbErr);
+            }
+        }
+        res.status(500).json({
+            error: 'Order placement failed due to a server error.'
+        });
+    } finally {
+        if (connection) {
+            await closeConnectionAsync(connection);
+        }
     }
 });
-
-app.get('/api/stock-levels', async (req, res) => {
+// Get Orders for Logged-in User (User Protected)
+app.get('/api/my-orders', authenticateToken, requireRole(['user']), async (req, res) => {
+    const MaKH = req.user.MaKH;
+    if (!MaKH) {
+        // Should not happen if requireRole worked, but good check
+        return res.status(403).json({
+            error: 'No customer account linked to this user.'
+        });
+    }
     try {
-        const [results] = await connection.promise().query(`
-            SELECT 
-                p.MaSP,
-                p.name,
-                p.soluong as stock,
-                p.star
-            FROM products p
-            WHERE p.soluong <= 10 AND p.soluong > 0
-            ORDER BY p.soluong ASC, p.price DESC
-            LIMIT 10
-        `);
-        res.json(results);
+        // Add pagination similar to /api/orders if needed
+        const query = `
+ SELECT o.MaDH, FORMAT(o.NgayDat, 'yyyy-MM-dd') as NgayDat,
+ p.name as product_name, p.MaSP, o.SoLuong, o.TongTien
+ FROM orders o JOIN products p ON o.MaSP = p.MaSP
+ WHERE o.MaKH = ?
+ ORDER BY o.NgayDat DESC, o.MaDH DESC;`;
+        const orders = await queryAsync(query, [MaKH]);
+        res.json({
+            orders
+        }); // Keep structure consistent
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error(`Error fetching orders for MaKH ${MaKH}:`, error);
+        res.status(500).json({
+            error: 'Internal server error fetching your orders'
+        });
     }
 });
-
-app.get('/api/analysis', async (req, res) => {
+// Get All Orders (Admin/Employee Protected)
+app.get('/api/orders', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
     try {
-        const [revenueByMonth] = await connection.promise().query(`
-            SELECT 
-                DATE_FORMAT(o.NgayDat, '%Y-%m') as month,
-                SUM(o.TongTien) as revenue
-            FROM orders o
-            GROUP BY month
-            ORDER BY month
-        `);
-        const [topProducts] = await connection.promise().query(`
-            SELECT 
-                p.MaSP,
-                p.name,
-                SUM(o.SoLuong) as total_sold
-            FROM products p
-            JOIN orders o ON p.MaSP = o.MaSP
-            GROUP BY p.MaSP, p.name
-            ORDER BY total_sold DESC
-            LIMIT 10
-        `);
-        const topProductsData = topProducts.map(p => ({
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 15; // Default limit
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+        const params = [];
+        let whereClause = '';
+        if (search) {
+            // Search by Order ID, Customer Name, Product Name
+            whereClause = `WHERE (c.TenKH LIKE ? OR CAST(o.MaDH AS VARCHAR(20)) LIKE ? OR p.name LIKE ?)`;
+            const searchTerm = `%${search}%`;
+            params.push(searchTerm, searchTerm, searchTerm);
+        }
+        const countQuery = `
+ SELECT COUNT(o.MaDH) as total FROM orders o
+ LEFT JOIN customers c ON o.MaKH = c.MaKH -- LEFT JOIN in case customer deleted but order remains
+ LEFT JOIN products p ON o.MaSP = p.MaSP -- LEFT JOIN in case product deleted but order remains
+ ${whereClause}`;
+        const dataQuery = `
+ SELECT o.MaDH, FORMAT(o.NgayDat, 'yyyy-MM-dd') as NgayDat,
+ c.TenKH, c.MaKH, p.name as product_name, p.MaSP, o.SoLuong, o.TongTien
+ FROM orders o
+ LEFT JOIN customers c ON o.MaKH = c.MaKH
+ LEFT JOIN products p ON o.MaSP = p.MaSP
+ ${whereClause}
+ ORDER BY o.NgayDat DESC, o.MaDH DESC
+ OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;`;
+        const countQueryParams = [...params];
+        const dataQueryParams = [...params, offset, limit];
+        const [countResult, dataResult] = await Promise.all([
+            queryAsync(countQuery, countQueryParams),
+            queryAsync(dataQuery, dataQueryParams)
+        ]);
+        const totalItems = countResult[0]?.total || 0;
+        const totalPages = Math.ceil(totalItems / limit);
+        res.json({
+            orders: dataResult,
+            currentPage: page,
+            totalPages: totalPages,
+            totalItems: totalItems
+        });
+    } catch (error) {
+        console.error("Error fetching all orders (admin):", error);
+        res.status(500).json({
+            error: 'Failed to retrieve orders list.'
+        });
+    }
+});
+// Get Dashboard Statistics (Admin/Employee Protected)
+app.get('/api/dashboard', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
+    try {
+        const [productsResult, customersResult, ordersResult, revenueResult, recentOrdersResult] = await Promise.all([
+            queryAsync('SELECT COUNT(*) as count FROM products'),
+            queryAsync('SELECT COUNT(*) as count FROM customers'),
+            queryAsync('SELECT COUNT(*) as count FROM orders'),
+            queryAsync('SELECT ISNULL(SUM(TongTien), 0) as total FROM orders'),
+            queryAsync(`
+ SELECT TOP 5
+ o.MaDH, o.MaKH, c.TenKH, o.MaSP, p.name as product_name,
+ o.SoLuong, FORMAT(o.NgayDat, 'yyyy-MM-dd') as NgayDat, o.TongTien
+ FROM orders o
+ LEFT JOIN customers c ON o.MaKH = c.MaKH
+ LEFT JOIN products p ON o.MaSP = p.MaSP
+ ORDER BY o.NgayDat DESC, o.MaDH DESC;`)
+        ]);
+        res.json({
+            totalProducts: productsResult[0]?.count || 0,
+            totalCustomers: customersResult[0]?.count || 0,
+            totalOrders: ordersResult[0]?.count || 0,
+            totalRevenue: revenueResult[0]?.total || 0,
+            recentOrders: recentOrdersResult || []
+        });
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        res.status(500).json({
+            error: 'Failed to retrieve dashboard statistics.'
+        });
+    }
+});
+// Get Analysis Data (Admin/Employee Protected)
+app.get('/api/analysis', authenticateToken, requireRole(['admin', 'employee']), async (req, res) => {
+    try {
+        const revenueByMonthQuery = `
+ SELECT FORMAT(o.NgayDat, 'yyyy-MM') as month, SUM(o.TongTien) as revenue
+ FROM orders o GROUP BY FORMAT(o.NgayDat, 'yyyy-MM') ORDER BY month;`;
+        const topProductsQuery = `
+ SELECT TOP 10 p.name, SUM(o.SoLuong) as total_sold
+ FROM products p JOIN orders o ON p.MaSP = o.MaSP
+ GROUP BY p.MaSP, p.name ORDER BY total_sold DESC;`;
+        const customerOrdersDistributionQuery = `
+ SELECT order_range, COUNT(*) AS count FROM (
+ SELECT CASE
+ WHEN ISNULL(SUM(o.SoLuong), 0) BETWEEN 0 AND 200 THEN '0 - 200'
+ WHEN ISNULL(SUM(o.SoLuong), 0) BETWEEN 201 AND 400 THEN '201 - 400'
+ ELSE '400+'
+ END AS order_range
+ FROM customers c LEFT JOIN orders o ON c.MaKH = o.MaKH GROUP BY c.MaKH
+ ) AS subquery GROUP BY order_range ORDER BY CASE order_range WHEN '0 - 200' THEN 1 WHEN '201 - 400' THEN 2 ELSE 3 END;`;
+        const stockLevelsQuery = `SELECT name, soluong FROM products p;`;
+        const [revenueByMonth, topProductsRaw, customerOrdersDistributionRaw, stockLevelsRaw] = await Promise.all([
+            queryAsync(revenueByMonthQuery), queryAsync(topProductsQuery),
+            queryAsync(customerOrdersDistributionQuery), queryAsync(stockLevelsQuery)
+        ]);
+        const topProductsData = topProductsRaw.map(p => ({
             name: p.name,
             sales: p.total_sold
         }));
-        // Taking the quantities first
-        const [customerOrdersDistributionData] = await connection.promise().query(`
-            SELECT
-                order_range,
-                COUNT(*) AS count
-            FROM (
-                SELECT
-                    CASE
-                        WHEN SUM(o.SoLuong) BETWEEN 0 AND 200 THEN '0 - 200'
-                        WHEN SUM(o.SoLuong) BETWEEN 200 AND 400 THEN '200 - 400'
-                        ELSE '400+'
-                    END AS order_range
-                FROM customers c
-                JOIN orders o ON c.MaKH = o.MaKH
-                GROUP BY c.MaKH
-            ) AS subquery
-            GROUP BY order_range
-            ORDER BY
-                FIELD(order_range, '0 - 200', '200 - 400', '400+');
-
-        `);
-        // Labels: [1 - 4, 4 - 7, 7+]
-        const labels = ['0 - 200', '200 - 400', '400+'];
-        const data = [0, 0, 0];
-        customerOrdersDistributionData.forEach(row => {
-            const index = labels.indexOf(row.order_range);
-            data[index] = row.count;
-        });
-        const customerOrdersDistribution = { labels, data };
-
-        const [stockLevelsData] = await connection.promise().query(`
-            SELECT 
-                p.name,
-                p.SoLuong
-            FROM products p
-        `);
-        const outOfStock = stockLevelsData.filter(p => p.SoLuong === 0).length;
-        const lowStock = stockLevelsData.filter(p => p.SoLuong > 0 && p.SoLuong < 10).length;
-        const adequateStock = stockLevelsData.filter(p => p.SoLuong >= 10).length;
+        const labels = ['0 - 200', '201 - 400', '400+'];
+        const distributionDataMap = new Map(customerOrdersDistributionRaw.map(item => [item.order_range, item.count]));
+        const customerOrdersDistribution = {
+            labels: labels,
+            data: labels.map(label => distributionDataMap.get(label) || 0)
+        };
+        const outOfStock = stockLevelsRaw.filter(p => p.soluong === 0).length;
+        const lowStock = stockLevelsRaw.filter(p => p.soluong > 0 && p.soluong <= 10).length;
+        const adequateStock = stockLevelsRaw.filter(p => p.soluong > 10).length;
         const stockLevels = {
             outOfStock,
             lowStock,
             adequateStock
         };
-        res.json({ revenueByMonth, topProductsData, customerOrdersDistribution, stockLevels });
+        res.json({
+            revenueByMonth,
+            topProductsData,
+            customerOrdersDistribution,
+            stockLevels
+        });
     } catch (error) {
         console.error('Error fetching analysis data:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({
+            error: 'Internal server error fetching analysis data'
+        });
     }
 });
-
-// Get recent orders
-app.get('/api/recent-orders', async (req, res) => {
+// NEW: User Analysis Endpoint (User Protected)
+app.get('/api/user-analysis', authenticateToken, requireRole(['user']), async (req, res) => {
+    const MaKH = req.user.MaKH;
+    if (!MaKH) {
+        return res.status(400).json({
+            error: "No customer account linked to this user."
+        });
+    }
     try {
-        const [orders] = await connection.promise().query(`
-            SELECT o.MaDH, o.NgayDat, c.TenKH, p.name as product_name, 
-                   o.SoLuong, o.TongTien
-            FROM orders o
-            JOIN customers c ON o.MaKH = c.MaKH
-            JOIN products p ON o.MaSP = p.MaSP
-            ORDER BY o.NgayDat DESC
-            LIMIT 5
-        `);
-        res.json({ orders: orders || [] });
+        const totalOrdersQuery = 'SELECT COUNT(*) as count FROM orders WHERE MaKH = ?';
+        const totalSpentQuery = 'SELECT ISNULL(SUM(TongTien), 0) as total FROM orders WHERE MaKH = ?';
+        const recentOrdersQuery = `
+ SELECT TOP 5 o.MaDH, FORMAT(o.NgayDat, 'yyyy-MM-dd') as NgayDat, p.name as product_name, o.SoLuong, o.TongTien
+ FROM orders o JOIN products p ON o.MaSP = p.MaSP WHERE o.MaKH = ? ORDER BY o.NgayDat DESC, o.MaDH DESC`;
+        const monthlySpendingQuery = `
+ SELECT FORMAT(NgayDat, 'yyyy-MM') as month, SUM(TongTien) as monthly_total
+ FROM orders WHERE MaKH = ? GROUP BY FORMAT(NgayDat, 'yyyy-MM') ORDER BY month DESC`;
+        const [totalOrdersResult, totalSpentResult, recentOrdersResult, monthlySpendingResult] = await Promise.all([
+            queryAsync(totalOrdersQuery, [MaKH]), queryAsync(totalSpentQuery, [MaKH]),
+            queryAsync(recentOrdersQuery, [MaKH]), queryAsync(monthlySpendingQuery, [MaKH])
+        ]);
+        res.json({
+            totalOrders: totalOrdersResult[0]?.count || 0,
+            totalSpent: totalSpentResult[0]?.total || 0,
+            recentOrders: recentOrdersResult || [],
+            monthlySpending: monthlySpendingResult || []
+        });
     } catch (error) {
-        console.error('Error fetching recent orders:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error(`Error fetching user analysis for MaKH ${MaKH}:`, error);
+        res.status(500).json({
+            error: 'Failed to retrieve user analysis data.'
+        });
     }
 });
+// --- HTML Page Serving Routes (No .html extension) ---
+const frontendDir = path.join(__dirname, '../frontend');
+const servePage = (pageName) => (req, res) => res.sendFile(path.join(frontendDir, pageName));
+const serveAdminPage = (pageName) => (req, res) => res.sendFile(path.join(frontendDir, 'admin', pageName));
+// Public Pages
+app.get('/', servePage('index.html'));
+app.get('/login', servePage('login.html'));
+app.get('/register', servePage('register.html'));
+app.get('/products', servePage('products.html'));
+app.get('/cart', servePage('cart.html'));
+// User Protected Pages
+app.get('/orders', servePage('orders.html'));
+app.get('/user-dashboard', servePage('user-dashboard.html'));
 
-// Get order history with pagination
-app.get('/api/order-history', async (req, res) => {
+// Admin/Employee Protected Pages
+app.get('/admin/dashboard', serveAdminPage('dashboard.html'));
+app.get('/admin/manage-products', serveAdminPage('manage-products.html'));
+app.get('/admin/manage-orders', serveAdminPage('manage-orders.html'));
+// Add more admin routes here if needed
+// --- Server Initialization ---
+async function startServer() {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        
-        let query = `
-            SELECT o.MaDH, o.NgayDat, c.TenKH, p.name as product_name,
-                   o.SoLuong, o.TongTien
-            FROM orders o
-            JOIN customers c ON o.MaKH = c.MaKH
-            JOIN products p ON o.MaSP = p.MaSP
-        `;
-        
-        const params = [];
-        
-        if (req.query.startDate && req.query.endDate) {
-            query += ' WHERE o.NgayDat BETWEEN ? AND ?';
-            params.push(req.query.startDate, req.query.endDate);
+        // 1. Test DB Connection
+        console.log("🚀 Starting Server Initialization...");
+        console.log(" [1/4] Testing database connection...");
+        const testResult = await queryAsync("SELECT 1 AS test");
+        if (!testResult || testResult.length === 0 || testResult[0]?.test !== 1) throw new Error("Database connection test failed.");
+        console.log(" ✅ Database connection successful.");
+        // 2. Ensure DB Schema (Creates/Alters if necessary)
+        console.log(" [2/4] Initializing/Verifying database schema...");
+        await initDB(); // Handles creation and alteration checks internally
+        console.log(" ✅ Database schema initialization complete.");
+        // 3. Check if Initial Data Import is Needed (Only if tables are empty)
+        console.log(" [3/4] Checking if initial data import is needed...");
+        let needsImport = false;
+        const productCountResult = await queryAsync("SELECT COUNT(*) as count FROM products");
+        const customerCountResult = await queryAsync("SELECT COUNT(*) as count FROM customers");
+        if (productCountResult[0]?.count === 0 || customerCountResult[0]?.count === 0) {
+            console.log(` Products: ${productCountResult[0]?.count}, Customers: ${customerCountResult[0]?.count}. Data import required.`);
+            needsImport = true;
+        } else {
+            console.log(` Products: ${productCountResult[0]?.count}, Customers: ${customerCountResult[0]?.count}. Skipping initial data import.`);
         }
-        
-        query += ' ORDER BY o.NgayDat DESC';
-        
-        // Get total count
-        const countQuery = `SELECT COUNT(*) as total FROM (${query}) as sub`;
-        const [countResult] = await connection.promise().query(countQuery, params);
-        const totalItems = countResult[0].total;
-        
-        // Get paginated results
-        query += ' LIMIT ? OFFSET ?';
-        params.push(limit, offset);
-        
-        const [orders] = await connection.promise().query(query, params);
-        
-        res.json({
-            orders,
-            totalItems,
-            totalPages: Math.ceil(totalItems / limit),
-            currentPage: page
-        });
-    } catch (error) {
-        console.error('Error fetching order history:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get out of stock and low stock products
-app.get('/api/out-of-stock', async (req, res) => {
-    try {
-        const [products] = await connection.promise().query(`
-            SELECT MaSP, name, soluong as stock, price
-            FROM products
-            WHERE soluong <= 10
-            ORDER BY soluong ASC
-            LIMIT 10
-        `);
-        res.json(products);
-    } catch (error) {
-        console.error('Error fetching out of stock products:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get top 10 out-of-stock products
-app.get('/api/out-of-stock', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT MaSP, name, price, soluong as stock, star
-            FROM products
-            WHERE soluong = 0
-            ORDER BY price DESC
-            LIMIT 10
-        `);
-        res.json(results);
-    } catch (error) {
-        console.error('Error fetching out-of-stock products:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get top 10 inactive customers (customers with no orders in the last 30 days)
-app.get('/api/inactive-customers', async (req, res) => {
-    try {
-        const [results] = await connection.promise().query(`
-            SELECT c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai,
-                   MAX(o.NgayDat) as last_order_date,
-                   COUNT(o.MaDH) as total_orders
-            FROM customers c
-            LEFT JOIN orders o ON c.MaKH = o.MaKH
-            GROUP BY c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai
-            HAVING last_order_date IS NULL OR last_order_date < DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            ORDER BY last_order_date ASC
-            LIMIT 10
-        `);
-        res.json(results);
-    } catch (error) {
-        console.error('Error fetching inactive customers:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all products with pagination and sorting
-app.get('/api/products', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const search = req.query.search || '';
-        const sort = req.query.sort || 'MaSP';
-        const direction = req.query.direction || 'asc';
-
-        // Map frontend field names to database column names
-        const fieldMap = {
-            'id': 'MaSP',
-            'name': 'name',
-            'price': 'price',
-            'stock': 'soluong',
-            'rating': 'star'
-        };
-
-        const sortField = fieldMap[sort] || 'MaSP';
-        const sortDirection = direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-
-        const searchCondition = search ? 
-            `WHERE name LIKE ? OR MaSP LIKE ?` : 
-            '';
-        const searchParams = search ? 
-            [`%${search}%`, `%${search}%`] : 
-            [];
-
-        // Get total count for pagination
-        const [countResult] = await connection.promise().query(
-            `SELECT COUNT(*) as total FROM products ${searchCondition}`,
-            searchParams
-        );
-        const total = countResult[0].total;
-
-        // Get products with search, sorting, and pagination
-        const [products] = await connection.promise().query(
-            `SELECT * FROM products ${searchCondition} 
-             ORDER BY ${sortField} ${sortDirection}
-             LIMIT ? OFFSET ?`,
-            [...searchParams, limit, offset]
-        );
-
-        res.json({
-            products: products.map(p => ({
-                ...p,
-                price: parseFloat(p.price),
-                star: parseFloat(p.star)
-            })),
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalItems: total
-        });
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all customers with pagination
-app.get('/api/customers', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const search = req.query.search || '';
-
-        const searchCondition = search ? 
-            `WHERE c.TenKH LIKE ? OR c.MaKH LIKE ?` : 
-            '';
-        const searchParams = search ? 
-            [`%${search}%`, `%${search}%`] : 
-            [];
-
-        const [customers] = await connection.promise().query(`
-            SELECT c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai,
-                   COUNT(o.MaDH) as total_orders,
-                   SUM(o.TongTien) as total_spent
-            FROM customers c
-            LEFT JOIN orders o ON c.MaKH = o.MaKH
-            ${searchCondition}
-            GROUP BY c.MaKH, c.TenKH, c.DiaChi, c.SoDienThoai
-            ORDER BY total_spent DESC
-            LIMIT ? OFFSET ?
-        `, [...searchParams, limit, offset]);
-
-        const [total] = await connection.promise().query('SELECT COUNT(*) as count FROM customers');
-
-        res.json({
-            customers,
-            total: total[0].count,
-            page,
-            totalPages: Math.ceil(total[0].count / limit)
-        });
-    } catch (error) {
-        console.error('Error fetching customers:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all orders with pagination
-app.get('/api/orders', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const search = req.query.search || '';
-        
-        const searchCondition = search ? 
-            `WHERE c.TenKH LIKE ? OR o.MaDH LIKE ? OR p.name LIKE ?` : 
-            '';
-        const searchParams = search ? 
-            [`%${search}%`, `%${search}%`, `%${search}%`] : 
-            [];
-
-        // Get total count for pagination
-        const [countResult] = await connection.promise().query(
-            `SELECT COUNT(DISTINCT o.MaDH) as total 
-             FROM orders o
-             JOIN customers c ON o.MaKH = c.MaKH
-             JOIN products p ON o.MaSP = p.MaSP
-             ${searchCondition}`,
-            searchParams
-        );
-        const total = countResult[0].total;
-
-        // Get orders with search and pagination
-        const [orders] = await connection.promise().query(
-            `SELECT o.MaDH, DATE_FORMAT(o.NgayDat, '%Y-%m-%d') as NgayDat, 
-                    c.TenKH, p.name as product_name,
-                    o.SoLuong, o.TongTien
-             FROM orders o
-             JOIN customers c ON o.MaKH = c.MaKH
-             JOIN products p ON o.MaSP = p.MaSP
-             ${searchCondition}
-             ORDER BY o.NgayDat DESC
-             LIMIT ? OFFSET ?`,
-            [...searchParams, limit, offset]
-        );
-
-        res.json({
-            orders: orders.map(order => ({
-                ...order,
-                TongTien: parseFloat(order.TongTien)
-            })),
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalItems: total
-        });
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all customers with pagination and search
-app.get('/api/customers', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const search = req.query.search || '';
-        
-        const searchCondition = search ? 
-            `WHERE c.TenKH LIKE ? OR c.MaKH LIKE ? OR c.DiaChi LIKE ? OR c.SoDienThoai LIKE ?` : 
-            '';
-        const searchParams = search ? 
-            [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`] : 
-            [];
-
-        // Get total count for pagination
-        const [countResult] = await connection.promise().query(
-            `SELECT COUNT(*) as total 
-             FROM customers c
-             ${searchCondition}`,
-            searchParams
-        );
-        const total = countResult[0].total;
-
-        // Get customers with search and pagination
-        const [customers] = await connection.promise().query(
-            `SELECT 
-                c.*,
-                COUNT(DISTINCT o.MaDH) as total_orders,
-                COALESCE(SUM(o.TongTien), 0) as total_spent
-             FROM customers c
-             LEFT JOIN orders o ON c.MaKH = o.MaKH
-             ${searchCondition}
-             GROUP BY c.MaKH
-             ORDER BY total_spent DESC
-             LIMIT ? OFFSET ?`,
-            [...searchParams, limit, offset]
-        );
-
-        res.json({
-            customers: customers.map(customer => ({
-                ...customer,
-                total_spent: parseFloat(customer.total_spent)
-            })),
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalItems: total
-        });
-    } catch (error) {
-        console.error('Error fetching customers:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get dashboard statistics
-app.get('/api/dashboard', async (req, res) => {
-    try {
-        const [totalProducts] = await connection.promise().query('SELECT COUNT(*) as count FROM products');
-        const [totalCustomers] = await connection.promise().query('SELECT COUNT(*) as count FROM customers');
-        const [totalOrders] = await connection.promise().query('SELECT COUNT(*) as count FROM orders');
-        const [totalRevenue] = await connection.promise().query('SELECT SUM(TongTien) as total FROM orders');
-        
-        const [recentOrders] = await connection.promise().query(`
-            SELECT o.MaDH, o.MaKH, c.TenKH, o.MaSP, p.name as product_name,
-                   o.SoLuong, o.NgayDat, o.TongTien
-            FROM orders o
-            JOIN customers c ON o.MaKH = c.MaKH
-            JOIN products p ON o.MaSP = p.MaSP
-            ORDER BY o.NgayDat DESC
-            LIMIT 5
-        `);
-
-        res.json({
-            totalProducts: totalProducts[0].count,
-            totalCustomers: totalCustomers[0].count,
-            totalOrders: totalOrders[0].count,
-            totalRevenue: totalRevenue[0].total || 0,
-            recentOrders
-        });
-    } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Place new order
-app.post('/api/orders', async (req, res) => {
-    const { MaKH, MaSP, SoLuong } = req.body;
-
-    if (!MaKH || !MaSP || !SoLuong) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    try {
-        // Get product details and check stock
-        const [products] = await connection.promise().query(
-            'SELECT MaSP, name, price, soluong FROM products WHERE MaSP = ?',
-            [MaSP]
-        );
-
-        if (!products || products.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
+        // Set users == TIESINGER to admin role for testing
+        const setAdminRoleQuery = `UPDATE users SET role = 'admin' WHERE username = 'TIESINGER';`;
+        // Update MaKH and MaSP to be identity (1, 1) if not already set
+        await queryAsync(setAdminRoleQuery);
+        console.log(" ✅ User role updated to admin for TIESINGER.");
+        // 4. Conditionally Run Import (Skips existing records)
+        if (needsImport) {
+            console.log(" [4/4] Attempting initial data population from CSV (will skip existing)...");
+            await importDataFromCSV();
+            console.log(" ✅ Initial data population check/import complete.");
+        } else {
+            console.log(" [4/4] Skipping data import step.");
         }
-
-        const product = products[0];
-        if (product.soluong < SoLuong) {
-            return res.status(400).json({ 
-                error: `Not enough stock available. Current stock: ${product.soluong}` 
-            });
-        }
-
-        // Calculate total and get next order ID
-        const TongTien = product.price * SoLuong;
-        const [lastOrder] = await connection.promise().query('SELECT MAX(MaDH) as lastId FROM orders');
-        const MaDH = (lastOrder[0].lastId || 0) + 1;
-
-        try {
-            // Begin transaction
-            await connection.promise().beginTransaction();
-
-            // Create order
-            await connection.promise().query(
-                'INSERT INTO orders (MaDH, MaKH, MaSP, SoLuong, TongTien, NgayDat) VALUES (?, ?, ?, ?, ?, NOW())',
-                [MaDH, MaKH, MaSP, SoLuong, TongTien]
-            );
-
-            // Update product stock
-            await connection.promise().query(
-                'UPDATE products SET soluong = soluong - ? WHERE MaSP = ?',
-                [SoLuong, MaSP]
-            );
-
-            // Commit transaction
-            await connection.promise().commit();
-
-            // Get updated stock for response
-            const [updatedProduct] = await connection.promise().query(
-                'SELECT soluong FROM products WHERE MaSP = ?',
-                [MaSP]
-            );
-
-            res.json({
-                success: true,
-                orderId: MaDH,
-                remainingStock: updatedProduct[0].soluong
-            });
-        } catch (error) {
-            await connection.promise().rollback();
-            throw error;
-        }
-    } catch (error) {
-        console.error('Error placing order:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get products with search, sort, and pagination
-app.get('/api/products', async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-        const search = req.query.search || '';
-        const sortBy = req.query.sortBy || 'MaSP';
-        const sortOrder = req.query.sortOrder === 'desc' ? 'DESC' : 'ASC';
-
-        let query = `
-            SELECT SQL_CALC_FOUND_ROWS 
-                MaSP, name, description, price, soluong, 
-                category, image_url, created_at 
-            FROM products
-            WHERE name LIKE ? OR description LIKE ? OR category LIKE ?
-            ORDER BY ${sortBy} ${sortOrder}
-            LIMIT ? OFFSET ?
-        `;
-
-        const searchParam = `%${search}%`;
-        const [products] = await connection.promise().query(
-            query,
-            [searchParam, searchParam, searchParam, limit, offset]
-        );
-
-        const [total] = await connection.promise().query('SELECT FOUND_ROWS() as total');
-        const totalProducts = total[0].total;
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        res.json({
-            products,
-            currentPage: page,
-            totalPages,
-            totalProducts
+        // 5. Start Express Server
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, () => {
+            console.log("--------------------------------------------------");
+            console.log(`✅ Server running successfully on port ${PORT}`);
+            console.log(`🔗 Access Frontend: http://localhost:${PORT}`);
+            console.log("--------------------------------------------------");
         });
     } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error("💥💥💥 Server Startup Failed! 💥💥💥");
+        console.error("Error during initialization:", error);
+        // Provide specific guidance based on common errors
+        if (error.message.includes('Login failed') || error.code === 'ELOGIN') {
+            console.error("Hint: Check SQL Server Authentication. Ensure 'Trusted_Connection=Yes' is appropriate or provide User ID/Password in connection string.");
+        } else if (error.message.includes('ETIMEOUT') || error.message.includes('ENETUNREACH')) {
+            console.error("Hint: Cannot reach SQL Server. Ensure the server is running and accessible from this machine (check firewall, server name/instance).");
+        } else if (error.message.includes('database') && error.message.includes('does not exist')) {
+            console.error(`Hint: Database '${process.env.DB_NAME || 'electronic_storage'}' not found. Please create it or check DB_NAME in .env.`);
+        } else if (error.sqlState) { // Generic SQL Error
+            console.error(`Hint: SQL Error State: ${error.sqlState}, Code: ${error.code}. Check the query and database schema.`);
+        }
+        process.exit(1); // Exit if critical initialization fails
     }
-});
-
-// Initialize database on startup
-initDB();
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+}
+// Start the server process
+startServer();

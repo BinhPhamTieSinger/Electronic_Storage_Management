@@ -1,0 +1,183 @@
+/* === PRODUCTS PAGE STYLES === */
+/* --- Controls --- */
+.product-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    /* Subtle background */
+    border-radius: var(--border-radius);
+}
+
+.product-controls .control-group label {
+    margin-right: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    font-size: 0.9rem;
+}
+
+.product-controls input[type="search"],
+.product-controls select {
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-radius: var(--border-radius);
+    min-width: 220px;
+    /* Ensure decent width */
+    font-size: 0.95rem;
+}
+
+.product-controls input[type="search"]::placeholder {
+    color: var(--text-color-muted);
+    opacity: 0.7;
+}
+
+/* --- Product Grid --- */
+#products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    /* Slightly wider cards */
+    gap: 1.8rem;
+    /* More gap */
+    margin-top: 1.5rem;
+}
+
+.product-card {
+    background-color: var(--bg-color-alt);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    /* More padding */
+    box-shadow: none;
+    /* Remove individual shadow, container has it */
+    transition: transform var(--transition-speed), border-color var(--transition-speed);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Prevent content overflow */
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+    /* Highlight on hover */
+}
+
+.product-card h3 {
+    font-size: 1.15rem;
+    /* Slightly larger name */
+    margin-bottom: 0.7rem;
+    color: var(--text-color-headings);
+    min-height: 44px;
+    /* Adjust for potential two lines */
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.product-card .price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    /* Bold price */
+    color: var(--primary-color);
+    /* Use accent color */
+    margin-bottom: 0.6rem;
+}
+
+.product-card .stock-rating-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-color-muted);
+    margin-bottom: 1rem;
+}
+
+.product-card .stock.low-stock {
+    color: var(--warning-color);
+    font-weight: 500;
+}
+
+.product-card .stock.out-of-stock {
+    color: var(--accent-color);
+    /* Use accent */
+    font-weight: 500;
+}
+
+.product-card .stars {
+    color: #f0ad4e;
+    /* Gold color for stars */
+}
+
+.product-card .stars .muted-star {
+    color: var(--text-color-muted);
+    opacity: 0.5;
+}
+
+.product-card .btn-add-to-cart {
+    width: 100%;
+    margin-top: auto;
+    /* Push button to bottom */
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.7rem 1rem;
+    /* Adjust padding */
+    font-weight: 500;
+}
+
+.product-card .btn-add-to-cart:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.product-card .btn-add-to-cart:disabled {
+    background-color: transparent;
+    border-color: var(--secondary-color);
+    color: var(--text-color-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.product-card .btn-add-to-cart.added {
+    /* Style for after adding */
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+    color: #fff;
+}
+
+/* --- Pagination --- */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2.5rem;
+    gap: 0.8rem;
+}
+
+.pagination-controls button {
+    /* Uses .btn .btn-secondary style */
+}
+
+.pagination-controls span {
+    color: var(--text-color-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+#loading-products {
+    /* Uses global spinner styles */
+    padding: 3rem 0;
+}
+
+.no-products-message {
+    text-align: center;
+    color: var(--text-color-muted);
+    padding: 2rem;
+    font-size: 1.1rem;
+}

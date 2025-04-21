@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ElectroStore</title>
+    <link rel="stylesheet" href="../css/style.css"> <!-- Note path change -->
+    <link rel="stylesheet" href="../css/admin.css"> <!-- Admin specific styles -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
+</head>
+
+<body>
+    <div id="header-placeholder"></div> <!-- Header loaded by main.js -->
+    <main class="container admin-container" id="dashboard-content">
+        <div class="admin-header">
+            <h2>Admin Dashboard</h2>
+        </div>
+        <div id="loading-widgets" style="display: none;" class="text-center p-2">
+            <div class="spinner"></div> Loading Stats...
+        </div>
+        <!-- Dashboard Widgets -->
+        <section class="dashboard-widgets">
+            <div class="widget">
+                <h3>Total Products</h3>
+                <div id="total-products" class="count">0</div>
+            </div>
+            <div class="widget">
+                <h3>Total Customers</h3>
+                <div id="total-customers" class="count">0</div>
+            </div>
+            <div class="widget">
+                <h3>Total Orders</h3>
+                <div id="total-orders" class="count">0</div>
+            </div>
+            <div class="widget">
+                <h3>Total Revenue</h3>
+                <div id="total-revenue" class="count revenue">0₫</div>
+            </div>
+        </section>
+        <hr class="my-3">
+        <!-- Recent Orders -->
+        <section class="recent-orders-section">
+            <h3>Recent Orders</h3>
+            <div id="loading-recent-orders" style="display: none;" class="text-center p-2">
+                <div class="spinner"></div> Loading Recent Orders...
+            </div>
+            <div class="table-responsive">
+                <table id="recent-orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-orders-tbody">
+                        <!-- Recent orders loaded here -->
+                        <tr>
+                            <td colspan="6">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <hr class="my-3">
+        <!-- Charts Section -->
+        <section id="charts-section">
+            <h3>Analytics</h3>
+            <div id="loading-charts" style="display: none;" class="text-center p-2">
+                <div class="spinner"></div> Loading Charts...
+            </div>
+            <div class="row" id="charts-row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                <div class="chart-container" style="flex: 1 1 45%; min-width: 300px; height: 350px;">
+                    <h3>Revenue by Month</h3>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="chart-container" style="flex: 1 1 45%; min-width: 300px; height: 350px;">
+                    <h3>Top Selling Products (Units)</h3>
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+                <div class="chart-container" style="flex: 1 1 45%; min-width: 300px; height: 350px;">
+                    <h3>Stock Levels</h3>
+                    <canvas id="stockLevelChart"></canvas>
+                </div>
+                <div class="chart-container" style="flex: 1 1 45%; min-width: 300px; height: 350px;">
+                    <h3>Customer Order Distribution</h3>
+                    <canvas id="customerDistChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="footer-placeholder"></div> <!-- Footer loaded by main.js -->
+    <!-- Core JS & Admin Logic -->
+    <script src="../js/main.js"></script> <!-- Path change -->
+    <script src="../js/cart.js"></script> <!-- Needed for header -->
+    <script src="../js/admin/dashboard.js"></script> <!-- Path change -->
+    <!-- Optional: Header Component Loading -->
+    <script src="../js/components/header.js"></script> <!-- Path change -->
+</body>
+
+</html>

@@ -1,0 +1,189 @@
+/* === ADMIN PAGE STYLES === */
+.admin-container {
+    /* Specific admin container styles if needed */
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-header h2 {
+    margin: 0;
+    color: var(--text-color-headings);
+}
+
+/* --- Dashboard Widgets --- */
+.dashboard-widgets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.widget {
+    background-color: var(--bg-color-alt);
+    padding: 1.8rem;
+    /* More padding */
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.widget:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+}
+
+.widget h3 {
+    margin-bottom: 0.8rem;
+    color: var(--text-color-muted);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    /* Uppercase title */
+    letter-spacing: 0.5px;
+}
+
+.widget .count {
+    font-size: 2.8rem;
+    /* Larger count */
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.1;
+}
+
+.widget .revenue {
+    font-size: 2.2rem;
+    /* Slightly smaller for revenue */
+    color: var(--success-color);
+}
+
+/* --- Charts --- */
+.chart-container {
+    background-color: var(--bg-color-alt);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    height: 400px;
+    /* Fixed height for consistency */
+    position: relative;
+    /* Needed for chart responsiveness */
+}
+
+.chart-container h3 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+#charts-row {
+    /* Ensure charts display correctly */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+#charts-row .chart-container {
+    flex: 1 1 48%;
+    /* Roughly two charts per row */
+    min-width: 300px;
+}
+
+/* --- Admin Tables --- */
+.admin-table-container {
+    overflow-x: auto;
+    /* Allow horizontal scroll */
+    background-color: var(--bg-color-alt);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    /* Add some padding around table */
+}
+
+.admin-table-container table {
+    margin-bottom: 0;
+    /* Remove default table margin */
+    background-color: transparent;
+    /* Table is inside padded container */
+}
+
+.admin-table-container table .actions .btn {
+    margin-left: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    /* Smaller action buttons */
+    font-size: 0.85rem;
+}
+
+.admin-table-container table .actions button.delete-btn {
+    /* Use btn-danger which is now accent color */
+}
+
+.admin-table-container table .actions button.edit-btn {
+    /* Use btn-warning */
+    color: #111;
+    /* Ensure text is dark */
+}
+
+.admin-table-container table .actions button.view-details-btn {
+    /* Use btn-info */
+}
+
+/* --- Admin Modals (Inherit global modal styles) --- */
+#product-modal .modal-content {
+    max-width: 700px;
+    /* Wider modal for product form */
+}
+
+/* --- Admin Search/Filter Bars --- */
+.admin-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+}
+
+.admin-controls label {
+    margin-right: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color-muted);
+    font-size: 0.9rem;
+}
+
+.admin-controls input[type="search"] {
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-radius: var(--border-radius);
+    min-width: 250px;
+    font-size: 0.95rem;
+}
+
+.widget .count {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.1;
+    /* Optional: Allow word break if needed, though abbreviations should help */
+    /* word-break: break-all; */
+}
+.widget .revenue {
+     font-size: 2.2rem; /* Keep slightly smaller if needed */
+     color: var(--success-color);
+     /* Optional: Reduce further if abbreviation + currency is still too long */
+     /* font-size: clamp(1.8rem, 4vw, 2.2rem); */ /* Example responsive font size */
+}
